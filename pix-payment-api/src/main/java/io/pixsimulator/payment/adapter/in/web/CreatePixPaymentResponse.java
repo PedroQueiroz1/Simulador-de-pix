@@ -8,7 +8,7 @@ import java.util.UUID;
 /**
  * Corpo da resposta de criacao de pagamento Pix.
  *
- * <p>Expoe apenas os dados publicos do pagamento. A {@code idempotencyKey} nao
+ * Expoe apenas os dados publicos do pagamento. A {@code idempotencyKey} nao
  * e retornada.
  */
 public record CreatePixPaymentResponse(

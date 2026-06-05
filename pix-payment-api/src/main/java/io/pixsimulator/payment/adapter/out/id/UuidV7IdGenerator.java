@@ -9,7 +9,7 @@ import java.util.UUID;
 /**
  * Adapter de saida que gera identificadores UUIDv7.
  *
- * <p>E o unico ponto do projeto que conhece a biblioteca {@code uuid-creator}.
+ * E o unico ponto do projeto que conhece a biblioteca {@code uuid-creator}.
  * {@code UuidCreator.getTimeOrderedEpoch()} produz um UUID versao 7
  * (time-ordered epoch), que carrega informacao temporal e melhora ordenacao
  * e localidade em indices.

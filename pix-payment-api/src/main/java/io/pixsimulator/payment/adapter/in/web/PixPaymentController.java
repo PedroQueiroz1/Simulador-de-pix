@@ -15,11 +15,11 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * Adapter de entrada HTTP para criacao de pagamento Pix.
  *
- * <p>Responsabilidades: receber a request, extrair o header
+ * Responsabilidades: receber a request, extrair o header
  * {@code Idempotency-Key}, montar o {@link CreatePixPaymentCommand}, chamar o
  * caso de uso e converter o resultado em resposta HTTP 201.
  *
- * <p>Nao contem regra de negocio: a regra vive no dominio.
+ * Nao contem regra de negocio: a regra vive no dominio.
  */
 @RestController
 @RequestMapping("/api/v1/pix/payments")

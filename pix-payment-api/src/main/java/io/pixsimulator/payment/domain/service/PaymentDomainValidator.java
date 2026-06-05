@@ -8,7 +8,7 @@ import java.util.UUID;
 /**
  * Concentra as regras essenciais de validacao de um pagamento Pix.
  *
- * <p>Faz parte do dominio puro: nao depende de Spring nem de bibliotecas de
+ * Faz parte do dominio puro: nao depende de Spring nem de bibliotecas de
  * infraestrutura. E usado por {@code PixPayment} no momento da criacao para
  * garantir que um pagamento so nasca em um estado valido.
  */

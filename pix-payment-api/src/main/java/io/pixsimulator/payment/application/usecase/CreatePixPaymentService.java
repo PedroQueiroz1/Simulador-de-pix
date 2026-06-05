@@ -13,11 +13,11 @@ import java.util.UUID;
 /**
  * Implementacao do caso de uso de criacao de pagamento Pix.
  *
- * <p>Orquestra o fluxo: gera o id via {@link IdGenerator}, cria a entidade de
+ * Orquestra o fluxo: gera o id via {@link IdGenerator}, cria a entidade de
  * dominio aplicando as regras de negocio, persiste via
  * {@link PixPaymentRepository} e devolve um {@link CreatePixPaymentResult}.
  *
- * <p>Nao depende de Spring nem da tecnologia concreta de persistencia/ID: as
+ * Nao depende de Spring nem da tecnologia concreta de persistencia/ID: as
  * dependencias chegam por construtor (injetadas pela configuracao).
  */
 public class CreatePixPaymentService implements CreatePixPaymentUseCase {

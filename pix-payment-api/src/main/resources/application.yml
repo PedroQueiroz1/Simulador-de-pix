@@ -2,7 +2,7 @@ spring:
   application:
     name: pix-payment-api
 
-  # Lote 2: persistencia real em SQL Server.
+  # Persistencia real em SQL Server.
   # Valores sensiveis (URL com nome do banco, usuario e senha) NUNCA ficam aqui:
   # vem de variaveis de ambiente, definidas no .env (ver .env.example e README).
   # Os testes de integracao sobrescrevem estas propriedades via Testcontainers.
@@ -22,7 +22,7 @@ spring:
       hibernate:
         format_sql: true
 
-  # Lote 2: Flyway versiona e aplica o schema (db/migration/V1__...).
+  # Flyway versiona e aplica o schema (db/migration/V1__...).
   flyway:
     enabled: true
 

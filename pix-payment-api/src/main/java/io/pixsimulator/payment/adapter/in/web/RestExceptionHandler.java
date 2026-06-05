@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 /**
  * Tratamento centralizado de erros da API.
  *
- * <p>Converte falhas de validacao de entrada e violacoes de regra de negocio
+ * Converte falhas de validacao de entrada e violacoes de regra de negocio
  * em respostas HTTP 400 com um corpo simples ({@link ErrorResponse}), sem
  * expor stack trace nem detalhes internos.
  */

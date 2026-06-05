@@ -8,10 +8,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Adapter de saida que persiste pagamentos em memoria (legado do Lote 1).
- *
- * <p>No Lote 2 deixou de ser um bean Spring (sem {@code @Repository}): o bean
- * ativo de persistencia passou a ser o {@code JpaPixPaymentRepositoryAdapter}
+ * Adapter de saida que persiste pagamentos em memoria. (LEGADO)
+ * O bean ativo de persistencia passou a ser o {@code JpaPixPaymentRepositoryAdapter}
  * (SQL Server). A classe permanece no codigo como implementacao alternativa da
  * porta {@link PixPaymentRepository}, util para testes leves e como referencia
  * de que o caso de uso nao depende da tecnologia concreta.

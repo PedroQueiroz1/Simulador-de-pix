@@ -9,10 +9,10 @@ import java.math.BigDecimal;
 /**
  * Corpo da requisicao de criacao de pagamento Pix.
  *
- * <p>Note que a {@code idempotencyKey} NAO faz parte do body: ela e um
+ * Note que a {@code idempotencyKey} NAO faz parte do body: ela e um
  * metadado da requisicao, recebido pelo header {@code Idempotency-Key}.
  *
- * <p>As validacoes aqui sao de formato/entrada (jakarta.validation). As regras
+ * As validacoes aqui sao de formato/entrada (jakarta.validation). As regras
  * de negocio (ex.: payerKey != receiverKey) ficam no dominio.
  */
 public record CreatePixPaymentRequest(

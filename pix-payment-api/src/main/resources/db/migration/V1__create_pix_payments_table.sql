@@ -1,4 +1,4 @@
--- Lote 2 - Migration inicial: cria a tabela de pagamentos Pix.
+-- Migration inicial: cria a tabela de pagamentos Pix.
 -- O schema e versionado e aplicado pelo Flyway; o Hibernate apenas valida.
 CREATE TABLE pix_payments (
     id UNIQUEIDENTIFIER NOT NULL,

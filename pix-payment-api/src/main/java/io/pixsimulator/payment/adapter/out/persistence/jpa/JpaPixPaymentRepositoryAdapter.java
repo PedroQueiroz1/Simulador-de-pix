@@ -14,11 +14,10 @@ import java.util.Optional;
  * Adapter de saida que implementa a porta {@link PixPaymentRepository} usando
  * Spring Data JPA + SQL Server.
  *
- * <p>E o bean ativo de persistencia no Lote 2 (substitui o adapter em memoria
- * do Lote 1). Traduz dominio &harr; entity via {@link PixPaymentJpaMapper} e
+ * Traduz dominio &harr; entity via {@link PixPaymentJpaMapper} e
  * delega o acesso ao banco ao {@link SpringDataPixPaymentRepository}.
  *
- * <p>A transacao e controlada aqui, no adapter, por serem operacoes de
+ * A transacao e controlada aqui, no adapter, por serem operacoes de
  * persistencia simples neste lote. Em lotes futuros (payment + ledger + outbox)
  * a transacao devera subir para o nivel do caso de uso.
  */

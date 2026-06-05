@@ -1,9 +1,3 @@
-# Lote 2 - Ambiente local minimo: apenas o SQL Server.
-#
-# Variaveis sensiveis (senha, usuario, nome do banco) ficam no arquivo .env,
-# que NUNCA e versionado. O docker compose carrega o .env automaticamente.
-# Veja .env.example para o template das variaveis.
-#
 # Subir:  docker compose up -d sqlserver
 #
 # O database NAO e criado automaticamente. Com o .env carregado no shell,

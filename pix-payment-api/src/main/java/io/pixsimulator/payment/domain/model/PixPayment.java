@@ -10,11 +10,11 @@ import java.util.UUID;
 /**
  * Entidade de dominio que representa um pagamento Pix.
  *
- * <p>E criada exclusivamente pela fabrica {@link #create}, que aplica as regras
+ * E criada exclusivamente pela fabrica {@link #create}, que aplica as regras
  * de negocio e garante que o pagamento nasca sempre em um estado valido, com
  * status {@link PixPaymentStatus#CREATED} e {@code createdAt} preenchido.
  *
- * <p>O dominio nao depende de Spring nem da biblioteca de geracao de UUID: o
+ * O dominio nao depende de Spring nem da biblioteca de geracao de UUID: o
  * {@code id} ja chega pronto (gerado por uma porta {@code IdGenerator}).
  */
 public final class PixPayment {
