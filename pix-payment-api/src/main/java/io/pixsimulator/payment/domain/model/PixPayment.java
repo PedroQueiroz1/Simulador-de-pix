@@ -76,6 +76,37 @@ public final class PixPayment {
         );
     }
 
+    /**
+     * Reconstroi um pagamento ja existente a partir de dados persistidos.
+     *
+     * <p>Diferente de {@link #create}, NAO gera novo {@code status} nem novo
+     * {@code createdAt}: ambos chegam prontos do repositorio. E o ponto de
+     * entrada usado pelo mapper de persistencia (Entity -&gt; Domain) para
+     * preservar fielmente o estado salvo, sem reaplicar regras de criacao.
+     *
+     * <p>Continua sendo dominio puro: nao depende de JPA nem de Spring; apenas
+     * recebe os campos ja conhecidos.
+     */
+    public static PixPayment restore(UUID id,
+                                     String payerKey,
+                                     String receiverKey,
+                                     BigDecimal amount,
+                                     String description,
+                                     String idempotencyKey,
+                                     PixPaymentStatus status,
+                                     LocalDateTime createdAt) {
+        return new PixPayment(
+                id,
+                payerKey,
+                receiverKey,
+                amount,
+                description,
+                idempotencyKey,
+                status,
+                createdAt
+        );
+    }
+
     public UUID getId() {
         return id;
     }

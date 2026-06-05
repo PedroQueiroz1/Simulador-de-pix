@@ -2,20 +2,20 @@ package io.pixsimulator.payment.adapter.out.persistence.inmemory;
 
 import io.pixsimulator.payment.application.port.out.PixPaymentRepository;
 import io.pixsimulator.payment.domain.model.PixPayment;
-import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Adapter de saida que persiste pagamentos em memoria.
+ * Adapter de saida que persiste pagamentos em memoria (legado do Lote 1).
  *
- * <p>Implementacao temporaria do Lote 1, usando {@link ConcurrentHashMap} para
- * suportar acesso concorrente. Sera substituida por SQL Server no Lote 2 sem
- * impacto no caso de uso, que depende apenas da porta
- * {@link PixPaymentRepository}.
+ * <p>No Lote 2 deixou de ser um bean Spring (sem {@code @Repository}): o bean
+ * ativo de persistencia passou a ser o {@code JpaPixPaymentRepositoryAdapter}
+ * (SQL Server). A classe permanece no codigo como implementacao alternativa da
+ * porta {@link PixPaymentRepository}, util para testes leves e como referencia
+ * de que o caso de uso nao depende da tecnologia concreta.
  */
-@Repository
 public class InMemoryPixPaymentRepository implements PixPaymentRepository {
 
     private final ConcurrentHashMap<UUID, PixPayment> storage = new ConcurrentHashMap<>();
@@ -24,5 +24,12 @@ public class InMemoryPixPaymentRepository implements PixPaymentRepository {
     public PixPayment save(PixPayment payment) {
         storage.put(payment.getId(), payment);
         return payment;
+    }
+
+    @Override
+    public Optional<PixPayment> findByIdempotencyKey(String idempotencyKey) {
+        return storage.values().stream()
+                .filter(payment -> payment.getIdempotencyKey().equals(idempotencyKey))
+                .findFirst();
     }
 }

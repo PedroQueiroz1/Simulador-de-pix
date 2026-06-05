@@ -1,6 +1,7 @@
 package io.pixsimulator.payment.adapter.in.web;
 
 import io.pixsimulator.payment.application.dto.CreatePixPaymentResult;
+import io.pixsimulator.payment.application.exception.DuplicateIdempotencyKeyException;
 import io.pixsimulator.payment.application.port.in.CreatePixPaymentUseCase;
 import io.pixsimulator.payment.domain.exception.DomainException;
 import io.pixsimulator.payment.domain.model.PixPaymentStatus;
@@ -194,5 +195,21 @@ class PixPaymentControllerTest {
                         .content(VALID_BODY))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.idempotencyKey").doesNotExist());
+    }
+
+    @Test
+    @DisplayName("Deve retornar HTTP 409 quando a Idempotency-Key ja foi usada")
+    void shouldReturn409WhenIdempotencyKeyAlreadyUsed() throws Exception {
+        when(createPixPaymentUseCase.create(any()))
+                .thenThrow(new DuplicateIdempotencyKeyException(IDEMPOTENCY_VALUE));
+
+        mockMvc.perform(post("/api/v1/pix/payments")
+                        .header(IDEMPOTENCY_HEADER, IDEMPOTENCY_VALUE)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(VALID_BODY))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Idempotency key already used"))
+                .andExpect(jsonPath("$.errors").isArray())
+                .andExpect(jsonPath("$.errors[0]").value("A payment already exists for this Idempotency-Key"));
     }
 }

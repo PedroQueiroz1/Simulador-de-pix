@@ -29,15 +29,27 @@
         <java.version>17</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <uuid-creator.version>5.3.3</uuid-creator.version>
+        <!-- Versao do Testcontainers (o BOM e importado abaixo). O Spring Boot
+             parent ja gerencia Flyway, mssql-jdbc e Spring Data JPA. -->
+        <testcontainers.version>1.20.4</testcontainers.version>
     </properties>
 
-    <!-- Centraliza a versao da biblioteca de UUIDv7 para os modulos filhos. -->
+    <!-- Centraliza versoes para os modulos filhos. Alem do UUIDv7, importa o
+         BOM do Testcontainers (Lote 2) para alinhar as versoes dos modulos de
+         teste de integracao (junit-jupiter e mssqlserver). -->
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>com.github.f4b6a3</groupId>
                 <artifactId>uuid-creator</artifactId>
                 <version>${uuid-creator.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers-bom</artifactId>
+                <version>${testcontainers.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>

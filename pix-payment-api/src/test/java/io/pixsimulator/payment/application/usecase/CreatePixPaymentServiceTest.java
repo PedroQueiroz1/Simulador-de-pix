@@ -2,6 +2,7 @@ package io.pixsimulator.payment.application.usecase;
 
 import io.pixsimulator.payment.application.dto.CreatePixPaymentCommand;
 import io.pixsimulator.payment.application.dto.CreatePixPaymentResult;
+import io.pixsimulator.payment.application.exception.DuplicateIdempotencyKeyException;
 import io.pixsimulator.payment.application.port.out.IdGenerator;
 import io.pixsimulator.payment.application.port.out.PixPaymentRepository;
 import io.pixsimulator.payment.domain.exception.DomainException;
@@ -11,15 +12,18 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -114,6 +118,37 @@ class CreatePixPaymentServiceTest {
         );
 
         assertThrows(DomainException.class, () -> service.create(invalid));
+        verify(repository, never()).save(any(PixPayment.class));
+    }
+
+    @Test
+    @DisplayName("Deve consultar findByIdempotencyKey antes de salvar")
+    void shouldQueryFindByIdempotencyKeyBeforeSaving() {
+        when(repository.save(any(PixPayment.class))).thenAnswer(inv -> inv.getArgument(0));
+        CreatePixPaymentService service = new CreatePixPaymentService(repository, idGenerator);
+
+        service.create(validCommand());
+
+        InOrder inOrder = inOrder(repository);
+        inOrder.verify(repository).findByIdempotencyKey("7f9d0f7a-4b2a-4d2f-9e3b-8375b4fdc321");
+        inOrder.verify(repository).save(any(PixPayment.class));
+    }
+
+    @Test
+    @DisplayName("Deve lancar DuplicateIdempotencyKeyException quando a chave ja existir")
+    void shouldThrowDuplicateWhenIdempotencyKeyAlreadyExists() {
+        PixPayment existing = PixPayment.create(
+                FIXED_ID,
+                "11111111111",
+                "22222222222",
+                new BigDecimal("150.75"),
+                "Pagamento ja existente",
+                "7f9d0f7a-4b2a-4d2f-9e3b-8375b4fdc321");
+        when(repository.findByIdempotencyKey("7f9d0f7a-4b2a-4d2f-9e3b-8375b4fdc321"))
+                .thenReturn(Optional.of(existing));
+        CreatePixPaymentService service = new CreatePixPaymentService(repository, idGenerator);
+
+        assertThrows(DuplicateIdempotencyKeyException.class, () -> service.create(validCommand()));
         verify(repository, never()).save(any(PixPayment.class));
     }
 }

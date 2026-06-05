@@ -2,6 +2,7 @@ package io.pixsimulator.payment.application.usecase;
 
 import io.pixsimulator.payment.application.dto.CreatePixPaymentCommand;
 import io.pixsimulator.payment.application.dto.CreatePixPaymentResult;
+import io.pixsimulator.payment.application.exception.DuplicateIdempotencyKeyException;
 import io.pixsimulator.payment.application.port.in.CreatePixPaymentUseCase;
 import io.pixsimulator.payment.application.port.out.IdGenerator;
 import io.pixsimulator.payment.application.port.out.PixPaymentRepository;
@@ -31,6 +32,14 @@ public class CreatePixPaymentService implements CreatePixPaymentUseCase {
 
     @Override
     public CreatePixPaymentResult create(CreatePixPaymentCommand command) {
+        // Lote 2: primeira barreira de idempotencia. Consulta a chave antes de
+        // salvar; se ja existir, rejeita com 409. A constraint unica do banco e
+        // a barreira final contra requisicoes concorrentes.
+        repository.findByIdempotencyKey(command.idempotencyKey())
+                .ifPresent(existing -> {
+                    throw new DuplicateIdempotencyKeyException(command.idempotencyKey());
+                });
+
         UUID id = idGenerator.generate();
 
         PixPayment payment = PixPayment.create(

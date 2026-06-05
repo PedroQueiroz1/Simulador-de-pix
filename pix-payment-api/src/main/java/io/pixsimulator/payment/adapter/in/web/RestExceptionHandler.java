@@ -1,5 +1,6 @@
 package io.pixsimulator.payment.adapter.in.web;
 
+import io.pixsimulator.payment.application.exception.DuplicateIdempotencyKeyException;
 import io.pixsimulator.payment.domain.exception.DomainException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -57,6 +58,20 @@ public class RestExceptionHandler {
     public ResponseEntity<ErrorResponse> handleDomain(DomainException ex) {
         ErrorResponse body = new ErrorResponse("Erro de regra de negocio", List.of(ex.getMessage()));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
+    /**
+     * Reuso de {@code Idempotency-Key} (Lote 2) -&gt; HTTP 409 Conflict.
+     *
+     * <p>O corpo nao expoe a mensagem interna da excecao: usa um texto fixo,
+     * coerente com a limitacao atual (ainda nao ha comparacao de payload).
+     */
+    @ExceptionHandler(DuplicateIdempotencyKeyException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateIdempotencyKey(DuplicateIdempotencyKeyException ex) {
+        ErrorResponse body = new ErrorResponse(
+                "Idempotency key already used",
+                List.of("A payment already exists for this Idempotency-Key"));
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
     private String formatFieldError(FieldError fieldError) {

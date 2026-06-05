@@ -1,0 +1,31 @@
+# Lote 2 - Ambiente local minimo: apenas o SQL Server.
+#
+# Variaveis sensiveis (senha, usuario, nome do banco) ficam no arquivo .env,
+# que NUNCA e versionado. O docker compose carrega o .env automaticamente.
+# Veja .env.example para o template das variaveis.
+#
+# Subir:  docker compose up -d sqlserver
+#
+# O database NAO e criado automaticamente. Com o .env carregado no shell,
+# crie-o uma unica vez:
+#   docker exec -i pix-sqlserver /opt/mssql-tools18/bin/sqlcmd \
+#     -S localhost -U "$DB_USERNAME" -P "$DB_PASSWORD" -C \
+#     -Q "IF DB_ID('$DB_NAME') IS NULL CREATE DATABASE [$DB_NAME];"
+#
+# As tabelas sao criadas pelo Flyway quando a aplicacao sobe.
+# Os testes de integracao NAO usam este compose: sobem SQL Server via Testcontainers.
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: pix-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      # Senha lida do .env. Falha cedo, com mensagem clara, se nao estiver definida.
+      MSSQL_SA_PASSWORD: "${DB_PASSWORD:?defina DB_PASSWORD no arquivo .env}"
+    ports:
+      - "1433:1433"
+    volumes:
+      - pix-sqlserver-data:/var/opt/mssql
+
+volumes:
+  pix-sqlserver-data:
