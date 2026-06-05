@@ -3,7 +3,6 @@
 > Plataforma backend **event-driven** para simulação de pagamentos Pix, criada como projeto de portfólio com foco em Java, Spring Boot, microserviços, mensageria, idempotência, persistência, testes automatizados, CI/CD e práticas DevSecOps.
 
 <p>
-  <img src="https://img.shields.io/badge/Status-Lote%201%20conclu%C3%ADdo-brightgreen?style=for-the-badge">
   <img src="https://img.shields.io/badge/Java-17-blue?style=for-the-badge">
   <img src="https://img.shields.io/badge/Spring%20Boot-3.3.x-brightgreen?style=for-the-badge">
   <img src="https://img.shields.io/badge/Architecture-Hexagonal-purple?style=for-the-badge">
