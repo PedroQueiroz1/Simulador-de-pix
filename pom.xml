@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Spring Boot fornece o BOM (gestão de versões) para o projeto inteiro. -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.5</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>io.pixsimulator</groupId>
+    <artifactId>pix-transaction-simulator</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>pix-transaction-simulator</name>
+    <description>Pix Transaction Simulator - Maven parent multi-module (Lote 1)</description>
+
+    <!-- Maven parent multi-module: o Lote 1 declara apenas o pix-payment-api. -->
+    <modules>
+        <module>pix-payment-api</module>
+    </modules>
+
+    <properties>
+        <java.version>17</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <uuid-creator.version>5.3.3</uuid-creator.version>
+    </properties>
+
+    <!-- Centraliza a versao da biblioteca de UUIDv7 para os modulos filhos. -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.github.f4b6a3</groupId>
+                <artifactId>uuid-creator</artifactId>
+                <version>${uuid-creator.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+</project>
