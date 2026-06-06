@@ -8,7 +8,7 @@ import io.pixsimulator.payment.domain.model.PixPaymentStatus;
  * Mapper manual entre o dominio {@link PixPayment} e a entidade JPA
  * {@link PixPaymentEntity}.
  *
- * <p>E intencionalmente explicito (sem MapStruct neste lote) para deixar claro
+ * E intencionalmente explicito (sem MapStruct neste lote) para deixar claro
  * onde termina o dominio e onde comeca a persistencia. O mapper NAO cria regras
  * novas: apenas converte estruturas. A unica traducao de tipo e o
  * {@link PixPaymentStatus} (enum no dominio &harr; {@code String} na entity).

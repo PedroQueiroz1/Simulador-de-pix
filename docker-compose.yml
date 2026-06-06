@@ -1,4 +1,4 @@
-# Subir:  docker compose up -d sqlserver
+# Subir:  docker compose up -d sqlserver redis
 #
 # O database NAO e criado automaticamente. Com o .env carregado no shell,
 # crie-o uma unica vez:
@@ -7,7 +7,8 @@
 #     -Q "IF DB_ID('$DB_NAME') IS NULL CREATE DATABASE [$DB_NAME];"
 #
 # As tabelas sao criadas pelo Flyway quando a aplicacao sobe.
-# Os testes de integracao NAO usam este compose: sobem SQL Server via Testcontainers.
+# Os testes de integracao NAO usam este compose: sobem SQL Server e Redis
+# via Testcontainers.
 services:
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -20,6 +21,15 @@ services:
       - "1433:1433"
     volumes:
       - pix-sqlserver-data:/var/opt/mssql
+
+  # Lote 3: Redis como camada de controle de idempotencia.
+  # Sem volume: registros de idempotencia sao temporarios (TTL) e nao precisam
+  # sobreviver a reinicializacao do container.
+  redis:
+    image: redis:7-alpine
+    container_name: pix-redis
+    ports:
+      - "6379:6379"
 
 volumes:
   pix-sqlserver-data:

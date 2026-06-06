@@ -2,7 +2,10 @@ package io.pixsimulator.payment.application.usecase;
 
 import io.pixsimulator.payment.application.dto.CreatePixPaymentCommand;
 import io.pixsimulator.payment.application.dto.CreatePixPaymentResult;
-import io.pixsimulator.payment.application.exception.DuplicateIdempotencyKeyException;
+import io.pixsimulator.payment.application.idempotency.IdempotencyResponseMapper;
+import io.pixsimulator.payment.application.idempotency.IdempotencyService;
+import io.pixsimulator.payment.application.idempotency.IdempotencyStartResult;
+import io.pixsimulator.payment.application.idempotency.RequestFingerprintGenerator;
 import io.pixsimulator.payment.application.port.in.CreatePixPaymentUseCase;
 import io.pixsimulator.payment.application.port.out.IdGenerator;
 import io.pixsimulator.payment.application.port.out.PixPaymentRepository;
@@ -13,32 +16,55 @@ import java.util.UUID;
 /**
  * Implementacao do caso de uso de criacao de pagamento Pix.
  *
- * Orquestra o fluxo: gera o id via {@link IdGenerator}, cria a entidade de
- * dominio aplicando as regras de negocio, persiste via
- * {@link PixPaymentRepository} e devolve um {@link CreatePixPaymentResult}.
+ * <p>Lote 3: a idempotencia completa passa a ser controlada via Redis (atraves
+ * do {@link IdempotencyService}), em vez de uma simples consulta ao banco.
  *
- * Nao depende de Spring nem da tecnologia concreta de persistencia/ID: as
- * dependencias chegam por construtor (injetadas pela configuracao).
+ * <p>Fluxo:
+ * <ol>
+ *   <li>gera o fingerprint (hash) do payload via {@link RequestFingerprintGenerator};</li>
+ *   <li>chama {@link IdempotencyService#startOrReturn} — que marca a chave como
+ *       {@code PROCESSING}, devolve a resposta original de um retry equivalente
+ *       ou lanca conflito/em-processamento;</li>
+ *   <li>se for nova operacao: gera o id, cria a entidade de dominio, persiste no
+ *       SQL Server e marca a idempotencia como {@code COMPLETED} com a resposta;</li>
+ *   <li>se for retry equivalente: devolve a resposta armazenada, sem criar nem
+ *       salvar de novo.</li>
+ * </ol>
+ *
+ * <p>A constraint unica do SQL Server continua como barreira final contra
+ * duplicidade (Redis e SQL Server nao compartilham transacao). Nao depende de
+ * Spring nem de Redis: as dependencias chegam por construtor.
  */
 public class CreatePixPaymentService implements CreatePixPaymentUseCase {
 
     private final PixPaymentRepository repository;
     private final IdGenerator idGenerator;
+    private final RequestFingerprintGenerator fingerprintGenerator;
+    private final IdempotencyService idempotencyService;
 
-    public CreatePixPaymentService(PixPaymentRepository repository, IdGenerator idGenerator) {
+    public CreatePixPaymentService(PixPaymentRepository repository,
+                                   IdGenerator idGenerator,
+                                   RequestFingerprintGenerator fingerprintGenerator,
+                                   IdempotencyService idempotencyService) {
         this.repository = repository;
         this.idGenerator = idGenerator;
+        this.fingerprintGenerator = fingerprintGenerator;
+        this.idempotencyService = idempotencyService;
     }
 
     @Override
     public CreatePixPaymentResult create(CreatePixPaymentCommand command) {
-        // Lote 2: primeira barreira de idempotencia. Consulta a chave antes de
-        // salvar; se ja existir, rejeita com 409. A constraint unica do banco e
-        // a barreira final contra requisicoes concorrentes.
-        repository.findByIdempotencyKey(command.idempotencyKey())
-                .ifPresent(existing -> {
-                    throw new DuplicateIdempotencyKeyException(command.idempotencyKey());
-                });
+        String requestHash = fingerprintGenerator.generate(command);
+
+        // Barreira de idempotencia: registra PROCESSING, devolve retry equivalente
+        // ou lanca IdempotencyConflictException / IdempotencyInProgressException.
+        IdempotencyStartResult start =
+                idempotencyService.startOrReturn(command.idempotencyKey(), requestHash);
+
+        if (start.isCompleted()) {
+            // Retry equivalente: devolve a resposta original, sem recriar nada.
+            return IdempotencyResponseMapper.toResult(start.response().orElseThrow());
+        }
 
         UUID id = idGenerator.generate();
 
@@ -53,7 +79,7 @@ public class CreatePixPaymentService implements CreatePixPaymentUseCase {
 
         PixPayment saved = repository.save(payment);
 
-        return new CreatePixPaymentResult(
+        CreatePixPaymentResult result = new CreatePixPaymentResult(
                 saved.getId(),
                 saved.getStatus(),
                 saved.getPayerKey(),
@@ -61,5 +87,14 @@ public class CreatePixPaymentService implements CreatePixPaymentUseCase {
                 saved.getAmount(),
                 saved.getDescription()
         );
+
+        // Guarda a resposta original no Redis para futuros retries equivalentes.
+        idempotencyService.complete(
+                command.idempotencyKey(),
+                requestHash,
+                IdempotencyResponseMapper.toResponseData(result)
+        );
+
+        return result;
     }
 }

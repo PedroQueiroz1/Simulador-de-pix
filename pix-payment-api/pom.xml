@@ -55,6 +55,13 @@
             <artifactId>mssql-jdbc</artifactId>
         </dependency>
 
+        <!-- Lote 3: Redis como camada de controle de idempotencia (TTL nativo,
+             acesso rapido por chave). Traz Lettuce + Spring Data Redis. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
         <!-- Geracao de UUIDv7 (isolada no adapter de saida). -->
         <dependency>
             <groupId>com.github.f4b6a3</groupId>

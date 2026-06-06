@@ -13,15 +13,15 @@ import java.util.UUID;
 /**
  * Entidade JPA que representa a linha da tabela {@code pix_payments}.
  *
- * <p>E um detalhe de infraestrutura (camada de persistencia), separada da
+ * E um detalhe de infraestrutura (camada de persistencia), separada da
  * entidade de dominio {@code domain.model.PixPayment}. So aqui vivem as
  * anotacoes JPA, nomes de coluna e constraints. A conversao entre as duas e
  * feita pelo mapper manual {@code PixPaymentJpaMapper}.
  *
- * <p>O {@code status} e persistido como {@code String} (nome do enum), nunca
+ * O {@code status} e persistido como {@code String} (nome do enum), nunca
  * como ordinal, para legibilidade e estabilidade do schema.
  *
- * <p>O mapeamento deve bater exatamente com o schema criado pelo Flyway, pois
+ * O mapeamento deve bater exatamente com o schema criado pelo Flyway, pois
  * o Hibernate roda com {@code ddl-auto=validate}.
  */
 @Entity

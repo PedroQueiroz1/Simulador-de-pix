@@ -2,6 +2,8 @@ package io.pixsimulator.payment.adapter.in.web;
 
 import io.pixsimulator.payment.application.dto.CreatePixPaymentResult;
 import io.pixsimulator.payment.application.exception.DuplicateIdempotencyKeyException;
+import io.pixsimulator.payment.application.exception.IdempotencyConflictException;
+import io.pixsimulator.payment.application.exception.IdempotencyInProgressException;
 import io.pixsimulator.payment.application.port.in.CreatePixPaymentUseCase;
 import io.pixsimulator.payment.domain.exception.DomainException;
 import io.pixsimulator.payment.domain.model.PixPaymentStatus;
@@ -211,5 +213,72 @@ class PixPaymentControllerTest {
                 .andExpect(jsonPath("$.message").value("Idempotency key already used"))
                 .andExpect(jsonPath("$.errors").isArray())
                 .andExpect(jsonPath("$.errors[0]").value("A payment already exists for this Idempotency-Key"));
+    }
+
+    @Test
+    @DisplayName("Lote 3: retry equivalente deve retornar HTTP 201 com o mesmo paymentId")
+    void shouldReturn201WithSamePaymentIdOnEquivalentRetry() throws Exception {
+        // O caso de uso devolve a mesma resposta (mesmo paymentId) nas duas chamadas:
+        // e o comportamento idempotente do retry equivalente, visto pelo controller.
+        when(createPixPaymentUseCase.create(any())).thenReturn(validResult());
+
+        for (int attempt = 0; attempt < 2; attempt++) {
+            mockMvc.perform(post("/api/v1/pix/payments")
+                            .header(IDEMPOTENCY_HEADER, IDEMPOTENCY_VALUE)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(VALID_BODY))
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.paymentId").value(PAYMENT_ID.toString()));
+        }
+    }
+
+    @Test
+    @DisplayName("Lote 3: mesma chave com payload diferente deve retornar HTTP 409 (conflito)")
+    void shouldReturn409OnIdempotencyConflict() throws Exception {
+        when(createPixPaymentUseCase.create(any()))
+                .thenThrow(new IdempotencyConflictException(IDEMPOTENCY_VALUE));
+
+        mockMvc.perform(post("/api/v1/pix/payments")
+                        .header(IDEMPOTENCY_HEADER, IDEMPOTENCY_VALUE)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(VALID_BODY))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Idempotency conflict"))
+                .andExpect(jsonPath("$.errors").isArray())
+                .andExpect(jsonPath("$.errors[0]")
+                        .value("The Idempotency-Key was already used with a different request payload"));
+    }
+
+    @Test
+    @DisplayName("Lote 3: mesma chave em processamento deve retornar HTTP 409 (in progress)")
+    void shouldReturn409WhenIdempotencyInProgress() throws Exception {
+        when(createPixPaymentUseCase.create(any()))
+                .thenThrow(new IdempotencyInProgressException(IDEMPOTENCY_VALUE));
+
+        mockMvc.perform(post("/api/v1/pix/payments")
+                        .header(IDEMPOTENCY_HEADER, IDEMPOTENCY_VALUE)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(VALID_BODY))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Idempotency key is already processing"))
+                .andExpect(jsonPath("$.errors").isArray())
+                .andExpect(jsonPath("$.errors[0]")
+                        .value("A request with this Idempotency-Key is still being processed"));
+    }
+
+    @Test
+    @DisplayName("Lote 3: resposta de conflito de idempotencia nao deve expor stack trace")
+    void idempotencyConflictShouldNotExposeStackTrace() throws Exception {
+        when(createPixPaymentUseCase.create(any()))
+                .thenThrow(new IdempotencyConflictException(IDEMPOTENCY_VALUE));
+
+        mockMvc.perform(post("/api/v1/pix/payments")
+                        .header(IDEMPOTENCY_HEADER, IDEMPOTENCY_VALUE)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(VALID_BODY))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.trace").doesNotExist())
+                .andExpect(content().string(not(containsString("Exception"))))
+                .andExpect(content().string(not(containsString(".java"))));
     }
 }

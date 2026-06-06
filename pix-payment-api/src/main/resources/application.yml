@@ -26,6 +26,19 @@ spring:
   flyway:
     enabled: true
 
+  # Lote 3: Redis para controle de idempotencia. Em producao real, host/porta
+  # viriam de variaveis de ambiente; localmente apontam para o docker-compose.
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+# Lote 3: configuracao de idempotencia.
+# ttl-seconds: tempo de vida do registro de idempotencia no Redis (24h).
+pix:
+  idempotency:
+    ttl-seconds: 86400
+
 server:
   port: 8080
   # Nunca expor stack trace nem mensagem interna no corpo das respostas de erro.

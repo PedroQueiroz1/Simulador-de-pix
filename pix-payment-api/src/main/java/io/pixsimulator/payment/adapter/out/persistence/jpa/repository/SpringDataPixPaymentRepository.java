@@ -9,7 +9,7 @@ import java.util.UUID;
 /**
  * Repositorio Spring Data JPA para {@link PixPaymentEntity}.
  *
- * <p>O Spring gera a implementacao em tempo de execucao. A query derivada
+ * O Spring gera a implementacao em tempo de execucao. A query derivada
  * {@code findByIdempotencyKey} e traduzida automaticamente para um
  * {@code WHERE idempotency_key = ?}.
  *

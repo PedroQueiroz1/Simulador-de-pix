@@ -1,6 +1,8 @@
 package io.pixsimulator.payment.adapter.in.web;
 
 import io.pixsimulator.payment.application.exception.DuplicateIdempotencyKeyException;
+import io.pixsimulator.payment.application.exception.IdempotencyConflictException;
+import io.pixsimulator.payment.application.exception.IdempotencyInProgressException;
 import io.pixsimulator.payment.domain.exception.DomainException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -71,6 +73,30 @@ public class RestExceptionHandler {
         ErrorResponse body = new ErrorResponse(
                 "Idempotency key already used",
                 List.of("A payment already exists for this Idempotency-Key"));
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+    /**
+     * Lote 3: {@code Idempotency-Key} reutilizada com payload diferente -&gt;
+     * HTTP 409 Conflict. Mensagem fixa, sem expor detalhes internos.
+     */
+    @ExceptionHandler(IdempotencyConflictException.class)
+    public ResponseEntity<ErrorResponse> handleIdempotencyConflict(IdempotencyConflictException ex) {
+        ErrorResponse body = new ErrorResponse(
+                "Idempotency conflict",
+                List.of("The Idempotency-Key was already used with a different request payload"));
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+    /**
+     * Lote 3: requisicao com {@code Idempotency-Key} cuja operacao ainda esta
+     * em processamento -&gt; HTTP 409 Conflict.
+     */
+    @ExceptionHandler(IdempotencyInProgressException.class)
+    public ResponseEntity<ErrorResponse> handleIdempotencyInProgress(IdempotencyInProgressException ex) {
+        ErrorResponse body = new ErrorResponse(
+                "Idempotency key is already processing",
+                List.of("A request with this Idempotency-Key is still being processed"));
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
