@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Adapter de saida que implementa a porta {@link PixPaymentRepository} usando
@@ -45,6 +46,13 @@ public class JpaPixPaymentRepositoryAdapter implements PixPaymentRepository {
     @Transactional(readOnly = true)
     public Optional<PixPayment> findByIdempotencyKey(String idempotencyKey) {
         return jpaRepository.findByIdempotencyKey(idempotencyKey)
+                .map(PixPaymentJpaMapper::toDomain);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<PixPayment> findById(UUID paymentId) {
+        return jpaRepository.findById(paymentId)
                 .map(PixPaymentJpaMapper::toDomain);
     }
 }

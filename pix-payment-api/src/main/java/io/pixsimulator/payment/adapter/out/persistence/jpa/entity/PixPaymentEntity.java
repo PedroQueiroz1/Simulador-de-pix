@@ -61,6 +61,15 @@ public class PixPaymentEntity {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
+    @Column(name = "processed_at")
+    private LocalDateTime processedAt;
+
+    @Column(name = "rejection_reason", length = 255)
+    private String rejectionReason;
+
     /** Construtor sem argumentos exigido pelo JPA/Hibernate. */
     protected PixPaymentEntity() {
     }
@@ -72,7 +81,10 @@ public class PixPaymentEntity {
                             String description,
                             String idempotencyKey,
                             String status,
-                            LocalDateTime createdAt) {
+                            LocalDateTime createdAt,
+                            LocalDateTime updatedAt,
+                            LocalDateTime processedAt,
+                            String rejectionReason) {
         this.id = id;
         this.payerKey = payerKey;
         this.receiverKey = receiverKey;
@@ -81,6 +93,9 @@ public class PixPaymentEntity {
         this.idempotencyKey = idempotencyKey;
         this.status = status;
         this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+        this.processedAt = processedAt;
+        this.rejectionReason = rejectionReason;
     }
 
     public UUID getId() {
@@ -113,5 +128,17 @@ public class PixPaymentEntity {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public LocalDateTime getProcessedAt() {
+        return processedAt;
+    }
+
+    public String getRejectionReason() {
+        return rejectionReason;
     }
 }

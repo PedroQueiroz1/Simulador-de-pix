@@ -16,10 +16,13 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -137,5 +140,71 @@ class JpaPixPaymentRepositoryAdapterIntegrationTest {
         PixPayment duplicate = newPayment(key);
 
         assertThrows(DataIntegrityViolationException.class, () -> adapter.save(duplicate));
+    }
+
+    @Test
+    @DisplayName("Lote 4: a migration V2 deve ter criado as colunas de ciclo de vida")
+    void migrationV2ShouldHaveCreatedLifecycleColumns() {
+        Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS "
+                        + "WHERE TABLE_NAME = 'pix_payments' "
+                        + "AND COLUMN_NAME IN ('updated_at', 'processed_at', 'rejection_reason')",
+                Integer.class);
+
+        assertEquals(3, count);
+    }
+
+    @Test
+    @DisplayName("Lote 4: deve buscar pagamento por paymentId")
+    void shouldFindById() {
+        PixPayment payment = newPayment("key-byid-" + UUID.randomUUID());
+        adapter.save(payment);
+
+        Optional<PixPayment> found = adapter.findById(payment.getId());
+
+        assertTrue(found.isPresent());
+        assertEquals(payment.getId(), found.get().getId());
+        assertEquals(PixPaymentStatus.CREATED, found.get().getStatus());
+        assertEquals(found.get().getCreatedAt(), found.get().getUpdatedAt());
+    }
+
+    @Test
+    @DisplayName("Lote 4: deve retornar vazio quando paymentId nao existir")
+    void shouldReturnEmptyWhenIdDoesNotExist() {
+        Optional<PixPayment> found = adapter.findById(idGenerator.generate());
+
+        assertTrue(found.isEmpty());
+    }
+
+    @Test
+    @DisplayName("Lote 4: deve salvar e recuperar pagamento aprovado")
+    void shouldSaveAndRetrieveApprovedPayment() {
+        PixPayment payment = newPayment("key-approved-" + UUID.randomUUID());
+        LocalDateTime now = LocalDateTime.now();
+        payment.markAsProcessing(now);
+        payment.approve(now);
+
+        adapter.save(payment);
+
+        PixPayment found = adapter.findById(payment.getId()).orElseThrow();
+        assertEquals(PixPaymentStatus.APPROVED, found.getStatus());
+        assertNotNull(found.getProcessedAt());
+        assertNull(found.getRejectionReason());
+    }
+
+    @Test
+    @DisplayName("Lote 4: deve salvar e recuperar pagamento rejeitado com rejectionReason")
+    void shouldSaveAndRetrieveRejectedPayment() {
+        PixPayment payment = newPayment("key-rejected-" + UUID.randomUUID());
+        LocalDateTime now = LocalDateTime.now();
+        payment.markAsProcessing(now);
+        payment.reject("Amount exceeds the simulated approval limit", now);
+
+        adapter.save(payment);
+
+        PixPayment found = adapter.findById(payment.getId()).orElseThrow();
+        assertEquals(PixPaymentStatus.REJECTED, found.getStatus());
+        assertNotNull(found.getProcessedAt());
+        assertEquals("Amount exceeds the simulated approval limit", found.getRejectionReason());
     }
 }

@@ -3,10 +3,14 @@ package io.pixsimulator.payment.config;
 import io.pixsimulator.payment.application.idempotency.IdempotencyService;
 import io.pixsimulator.payment.application.idempotency.RequestFingerprintGenerator;
 import io.pixsimulator.payment.application.port.in.CreatePixPaymentUseCase;
+import io.pixsimulator.payment.application.port.in.GetPixPaymentUseCase;
+import io.pixsimulator.payment.application.port.in.ProcessPixPaymentUseCase;
 import io.pixsimulator.payment.application.port.out.IdGenerator;
 import io.pixsimulator.payment.application.port.out.IdempotencyRepository;
 import io.pixsimulator.payment.application.port.out.PixPaymentRepository;
 import io.pixsimulator.payment.application.usecase.CreatePixPaymentService;
+import io.pixsimulator.payment.application.usecase.GetPixPaymentService;
+import io.pixsimulator.payment.application.usecase.ProcessPixPaymentService;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -44,5 +48,15 @@ public class UseCaseConfig {
                                                            RequestFingerprintGenerator fingerprintGenerator,
                                                            IdempotencyService idempotencyService) {
         return new CreatePixPaymentService(repository, idGenerator, fingerprintGenerator, idempotencyService);
+    }
+
+    @Bean
+    public GetPixPaymentUseCase getPixPaymentUseCase(PixPaymentRepository repository) {
+        return new GetPixPaymentService(repository);
+    }
+
+    @Bean
+    public ProcessPixPaymentUseCase processPixPaymentUseCase(PixPaymentRepository repository) {
+        return new ProcessPixPaymentService(repository);
     }
 }

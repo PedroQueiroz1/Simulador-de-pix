@@ -30,4 +30,9 @@ public class InMemoryPixPaymentRepository implements PixPaymentRepository {
                 .filter(payment -> payment.getIdempotencyKey().equals(idempotencyKey))
                 .findFirst();
     }
+
+    @Override
+    public Optional<PixPayment> findById(UUID paymentId) {
+        return Optional.ofNullable(storage.get(paymentId));
+    }
 }

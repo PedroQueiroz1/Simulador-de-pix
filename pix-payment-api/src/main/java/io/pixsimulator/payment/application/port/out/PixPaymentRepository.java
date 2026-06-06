@@ -3,6 +3,7 @@ package io.pixsimulator.payment.application.port.out;
 import io.pixsimulator.payment.domain.model.PixPayment;
 
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Porta de saida (output port) para persistencia de pagamentos.
@@ -23,4 +24,12 @@ public interface PixPaymentRepository {
      * constraint unica do banco).
      */
     Optional<PixPayment> findByIdempotencyKey(String idempotencyKey);
+
+    /**
+     * Busca um pagamento pelo seu identificador.
+     *
+     * Usado pelos casos de uso de consulta e de processamento (Lote 4) para
+     * recuperar o estado atual do pagamento antes de exibir ou transicionar.
+     */
+    Optional<PixPayment> findById(UUID paymentId);
 }

@@ -29,7 +29,10 @@ public final class PixPaymentJpaMapper {
                 payment.getDescription(),
                 payment.getIdempotencyKey(),
                 payment.getStatus().name(),
-                payment.getCreatedAt()
+                payment.getCreatedAt(),
+                payment.getUpdatedAt(),
+                payment.getProcessedAt(),
+                payment.getRejectionReason()
         );
     }
 
@@ -43,7 +46,10 @@ public final class PixPaymentJpaMapper {
                 entity.getDescription(),
                 entity.getIdempotencyKey(),
                 PixPaymentStatus.valueOf(entity.getStatus()),
-                entity.getCreatedAt()
+                entity.getCreatedAt(),
+                entity.getUpdatedAt(),
+                entity.getProcessedAt(),
+                entity.getRejectionReason()
         );
     }
 }

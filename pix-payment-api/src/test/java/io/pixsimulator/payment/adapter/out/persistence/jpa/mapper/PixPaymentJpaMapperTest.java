@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class PixPaymentJpaMapperTest {
 
@@ -21,23 +22,40 @@ class PixPaymentJpaMapperTest {
     private static final String DESCRIPTION = "Pagamento de teste";
     private static final String IDEMPOTENCY_KEY = "7f9d0f7a-4b2a-4d2f-9e3b-8375b4fdc321";
     private static final LocalDateTime CREATED_AT = LocalDateTime.of(2026, 6, 4, 10, 30, 0);
+    private static final LocalDateTime UPDATED_AT = LocalDateTime.of(2026, 6, 4, 10, 31, 0);
+    private static final LocalDateTime PROCESSED_AT = LocalDateTime.of(2026, 6, 4, 10, 32, 0);
+    private static final String REJECTION_REASON = "Amount exceeds the simulated approval limit";
 
-    private PixPayment domain() {
+    /** Pagamento ainda em CREATED: updatedAt = createdAt, sem processedAt/rejectionReason. */
+    private PixPayment createdDomain() {
         return PixPayment.restore(
                 ID, PAYER, RECEIVER, AMOUNT, DESCRIPTION, IDEMPOTENCY_KEY,
-                PixPaymentStatus.CREATED, CREATED_AT);
+                PixPaymentStatus.CREATED, CREATED_AT, CREATED_AT, null, null);
     }
 
-    private PixPaymentEntity entity() {
+    private PixPaymentEntity createdEntity() {
         return new PixPaymentEntity(
                 ID, PAYER, RECEIVER, AMOUNT, DESCRIPTION, IDEMPOTENCY_KEY,
-                PixPaymentStatus.CREATED.name(), CREATED_AT);
+                PixPaymentStatus.CREATED.name(), CREATED_AT, CREATED_AT, null, null);
+    }
+
+    /** Pagamento REJECTED: exercita processedAt e rejectionReason preenchidos. */
+    private PixPayment rejectedDomain() {
+        return PixPayment.restore(
+                ID, PAYER, RECEIVER, AMOUNT, DESCRIPTION, IDEMPOTENCY_KEY,
+                PixPaymentStatus.REJECTED, CREATED_AT, UPDATED_AT, PROCESSED_AT, REJECTION_REASON);
+    }
+
+    private PixPaymentEntity rejectedEntity() {
+        return new PixPaymentEntity(
+                ID, PAYER, RECEIVER, AMOUNT, DESCRIPTION, IDEMPOTENCY_KEY,
+                PixPaymentStatus.REJECTED.name(), CREATED_AT, UPDATED_AT, PROCESSED_AT, REJECTION_REASON);
     }
 
     @Test
     @DisplayName("Deve converter PixPayment (dominio) para PixPaymentEntity preservando todos os campos")
     void shouldMapDomainToEntity() {
-        PixPaymentEntity entity = PixPaymentJpaMapper.toEntity(domain());
+        PixPaymentEntity entity = PixPaymentJpaMapper.toEntity(createdDomain());
 
         assertEquals(ID, entity.getId());
         assertEquals(PAYER, entity.getPayerKey());
@@ -52,7 +70,7 @@ class PixPaymentJpaMapperTest {
     @Test
     @DisplayName("Deve converter PixPaymentEntity para PixPayment (dominio) preservando todos os campos")
     void shouldMapEntityToDomain() {
-        PixPayment domain = PixPaymentJpaMapper.toDomain(entity());
+        PixPayment domain = PixPaymentJpaMapper.toDomain(createdEntity());
 
         assertEquals(ID, domain.getId());
         assertEquals(PAYER, domain.getPayerKey());
@@ -67,15 +85,44 @@ class PixPaymentJpaMapperTest {
     @Test
     @DisplayName("Status deve ser persistido como String (nome do enum), nunca ordinal")
     void shouldMapStatusAsEnumName() {
-        PixPaymentEntity entity = PixPaymentJpaMapper.toEntity(domain());
+        PixPaymentEntity entity = PixPaymentJpaMapper.toEntity(createdDomain());
 
         assertEquals("CREATED", entity.getStatus());
     }
 
     @Test
-    @DisplayName("Round-trip dominio -> entity -> dominio deve preservar o estado")
+    @DisplayName("Deve mapear updatedAt (dominio -> entity e entity -> dominio)")
+    void shouldMapUpdatedAt() {
+        assertEquals(UPDATED_AT, PixPaymentJpaMapper.toEntity(rejectedDomain()).getUpdatedAt());
+        assertEquals(UPDATED_AT, PixPaymentJpaMapper.toDomain(rejectedEntity()).getUpdatedAt());
+    }
+
+    @Test
+    @DisplayName("Deve mapear processedAt (dominio -> entity e entity -> dominio)")
+    void shouldMapProcessedAt() {
+        assertEquals(PROCESSED_AT, PixPaymentJpaMapper.toEntity(rejectedDomain()).getProcessedAt());
+        assertEquals(PROCESSED_AT, PixPaymentJpaMapper.toDomain(rejectedEntity()).getProcessedAt());
+
+        // Em CREATED, processedAt continua nulo nos dois sentidos.
+        assertNull(PixPaymentJpaMapper.toEntity(createdDomain()).getProcessedAt());
+        assertNull(PixPaymentJpaMapper.toDomain(createdEntity()).getProcessedAt());
+    }
+
+    @Test
+    @DisplayName("Deve mapear rejectionReason (dominio -> entity e entity -> dominio)")
+    void shouldMapRejectionReason() {
+        assertEquals(REJECTION_REASON, PixPaymentJpaMapper.toEntity(rejectedDomain()).getRejectionReason());
+        assertEquals(REJECTION_REASON, PixPaymentJpaMapper.toDomain(rejectedEntity()).getRejectionReason());
+
+        // Em CREATED, rejectionReason continua nulo nos dois sentidos.
+        assertNull(PixPaymentJpaMapper.toEntity(createdDomain()).getRejectionReason());
+        assertNull(PixPaymentJpaMapper.toDomain(createdEntity()).getRejectionReason());
+    }
+
+    @Test
+    @DisplayName("Round-trip dominio -> entity -> dominio deve preservar o estado completo")
     void shouldRoundTripWithoutLoss() {
-        PixPayment original = domain();
+        PixPayment original = rejectedDomain();
 
         PixPayment roundTrip = PixPaymentJpaMapper.toDomain(PixPaymentJpaMapper.toEntity(original));
 
@@ -87,5 +134,8 @@ class PixPaymentJpaMapperTest {
         assertEquals(original.getIdempotencyKey(), roundTrip.getIdempotencyKey());
         assertEquals(original.getStatus(), roundTrip.getStatus());
         assertEquals(original.getCreatedAt(), roundTrip.getCreatedAt());
+        assertEquals(original.getUpdatedAt(), roundTrip.getUpdatedAt());
+        assertEquals(original.getProcessedAt(), roundTrip.getProcessedAt());
+        assertEquals(original.getRejectionReason(), roundTrip.getRejectionReason());
     }
 }

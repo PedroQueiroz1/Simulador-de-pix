@@ -3,6 +3,8 @@ package io.pixsimulator.payment.adapter.in.web;
 import io.pixsimulator.payment.application.exception.DuplicateIdempotencyKeyException;
 import io.pixsimulator.payment.application.exception.IdempotencyConflictException;
 import io.pixsimulator.payment.application.exception.IdempotencyInProgressException;
+import io.pixsimulator.payment.application.exception.PaymentNotFoundException;
+import io.pixsimulator.payment.application.exception.PaymentNotProcessableException;
 import io.pixsimulator.payment.domain.exception.DomainException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -60,6 +63,42 @@ public class RestExceptionHandler {
     public ResponseEntity<ErrorResponse> handleDomain(DomainException ex) {
         ErrorResponse body = new ErrorResponse("Erro de regra de negocio", List.of(ex.getMessage()));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
+    /**
+     * Lote 4: path variable com tipo invalido (ex.: {@code paymentId} que nao e
+     * um UUID valido) -&gt; HTTP 400 Bad Request.
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        ErrorResponse body = new ErrorResponse(
+                "Erro de validacao da requisicao",
+                List.of("Parametro invalido: " + ex.getName()));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
+    /**
+     * Lote 4: pagamento nao encontrado para o {@code paymentId} informado -&gt;
+     * HTTP 404 Not Found.
+     */
+    @ExceptionHandler(PaymentNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentNotFound(PaymentNotFoundException ex) {
+        ErrorResponse body = new ErrorResponse(
+                "Payment not found",
+                List.of("No payment was found for the provided paymentId"));
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+    }
+
+    /**
+     * Lote 4: tentativa de processar um pagamento ja em status terminal -&gt;
+     * HTTP 409 Conflict.
+     */
+    @ExceptionHandler(PaymentNotProcessableException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentNotProcessable(PaymentNotProcessableException ex) {
+        ErrorResponse body = new ErrorResponse(
+                "Payment cannot be processed",
+                List.of("Payment is already in a terminal status"));
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
     /**

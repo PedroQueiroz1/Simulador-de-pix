@@ -1,10 +1,16 @@
 package io.pixsimulator.payment.adapter.in.web;
 
 import io.pixsimulator.payment.application.dto.CreatePixPaymentResult;
+import io.pixsimulator.payment.application.dto.GetPixPaymentResult;
+import io.pixsimulator.payment.application.dto.ProcessPixPaymentResult;
 import io.pixsimulator.payment.application.exception.DuplicateIdempotencyKeyException;
 import io.pixsimulator.payment.application.exception.IdempotencyConflictException;
 import io.pixsimulator.payment.application.exception.IdempotencyInProgressException;
+import io.pixsimulator.payment.application.exception.PaymentNotFoundException;
+import io.pixsimulator.payment.application.exception.PaymentNotProcessableException;
 import io.pixsimulator.payment.application.port.in.CreatePixPaymentUseCase;
+import io.pixsimulator.payment.application.port.in.GetPixPaymentUseCase;
+import io.pixsimulator.payment.application.port.in.ProcessPixPaymentUseCase;
 import io.pixsimulator.payment.domain.exception.DomainException;
 import io.pixsimulator.payment.domain.model.PixPaymentStatus;
 import org.junit.jupiter.api.DisplayName;
@@ -16,12 +22,14 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -48,6 +56,12 @@ class PixPaymentControllerTest {
 
     @MockBean
     private CreatePixPaymentUseCase createPixPaymentUseCase;
+
+    @MockBean
+    private GetPixPaymentUseCase getPixPaymentUseCase;
+
+    @MockBean
+    private ProcessPixPaymentUseCase processPixPaymentUseCase;
 
     private CreatePixPaymentResult validResult() {
         return new CreatePixPaymentResult(
@@ -280,5 +294,132 @@ class PixPaymentControllerTest {
                 .andExpect(jsonPath("$.trace").doesNotExist())
                 .andExpect(content().string(not(containsString("Exception"))))
                 .andExpect(content().string(not(containsString(".java"))));
+    }
+
+    // ----------------------------------------------------------------------
+    // Lote 4: GET /api/v1/pix/payments/{paymentId}
+    // ----------------------------------------------------------------------
+
+    private GetPixPaymentResult getResult() {
+        LocalDateTime createdAt = LocalDateTime.of(2026, 6, 6, 10, 30, 0);
+        return new GetPixPaymentResult(
+                PAYMENT_ID,
+                PixPaymentStatus.CREATED,
+                "11111111111",
+                "22222222222",
+                new BigDecimal("150.75"),
+                "Pagamento de teste",
+                createdAt,
+                createdAt,
+                null,
+                null
+        );
+    }
+
+    @Test
+    @DisplayName("GET deve retornar HTTP 200 com o pagamento quando existir")
+    void getShouldReturn200WhenPaymentExists() throws Exception {
+        when(getPixPaymentUseCase.getById(PAYMENT_ID)).thenReturn(getResult());
+
+        mockMvc.perform(get("/api/v1/pix/payments/{paymentId}", PAYMENT_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.paymentId").value(PAYMENT_ID.toString()))
+                .andExpect(jsonPath("$.status").value("CREATED"))
+                .andExpect(jsonPath("$.payerKey").value("11111111111"))
+                .andExpect(jsonPath("$.receiverKey").value("22222222222"))
+                .andExpect(jsonPath("$.amount").value(150.75))
+                .andExpect(jsonPath("$.description").value("Pagamento de teste"))
+                .andExpect(jsonPath("$.createdAt").exists())
+                .andExpect(jsonPath("$.updatedAt").exists())
+                .andExpect(jsonPath("$.processedAt").doesNotExist())
+                .andExpect(jsonPath("$.rejectionReason").doesNotExist());
+    }
+
+    @Test
+    @DisplayName("GET deve retornar HTTP 404 quando o pagamento nao existir")
+    void getShouldReturn404WhenPaymentNotFound() throws Exception {
+        when(getPixPaymentUseCase.getById(PAYMENT_ID))
+                .thenThrow(new PaymentNotFoundException(PAYMENT_ID));
+
+        mockMvc.perform(get("/api/v1/pix/payments/{paymentId}", PAYMENT_ID))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Payment not found"))
+                .andExpect(jsonPath("$.errors").isArray())
+                .andExpect(jsonPath("$.errors[0]").value("No payment was found for the provided paymentId"));
+    }
+
+    @Test
+    @DisplayName("GET deve retornar HTTP 400 quando o paymentId nao for um UUID valido")
+    void getShouldReturn400ForInvalidUuid() throws Exception {
+        mockMvc.perform(get("/api/v1/pix/payments/{paymentId}", "nao-e-um-uuid"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.errors").isArray());
+    }
+
+    // ----------------------------------------------------------------------
+    // Lote 4: POST /api/v1/pix/payments/{paymentId}/process
+    // ----------------------------------------------------------------------
+
+    @Test
+    @DisplayName("POST process deve aprovar pagamento elegivel (HTTP 200, APPROVED)")
+    void processShouldApproveEligiblePayment() throws Exception {
+        ProcessPixPaymentResult approved = new ProcessPixPaymentResult(
+                PAYMENT_ID,
+                PixPaymentStatus.APPROVED,
+                LocalDateTime.of(2026, 6, 6, 10, 31, 0),
+                null
+        );
+        when(processPixPaymentUseCase.process(PAYMENT_ID)).thenReturn(approved);
+
+        mockMvc.perform(post("/api/v1/pix/payments/{paymentId}/process", PAYMENT_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.paymentId").value(PAYMENT_ID.toString()))
+                .andExpect(jsonPath("$.status").value("APPROVED"))
+                .andExpect(jsonPath("$.processedAt").exists())
+                .andExpect(jsonPath("$.rejectionReason").doesNotExist());
+    }
+
+    @Test
+    @DisplayName("POST process deve rejeitar pagamento acima do limite (HTTP 200, REJECTED)")
+    void processShouldRejectPaymentAboveLimit() throws Exception {
+        ProcessPixPaymentResult rejected = new ProcessPixPaymentResult(
+                PAYMENT_ID,
+                PixPaymentStatus.REJECTED,
+                LocalDateTime.of(2026, 6, 6, 10, 31, 0),
+                "Amount exceeds the simulated approval limit"
+        );
+        when(processPixPaymentUseCase.process(PAYMENT_ID)).thenReturn(rejected);
+
+        mockMvc.perform(post("/api/v1/pix/payments/{paymentId}/process", PAYMENT_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("REJECTED"))
+                .andExpect(jsonPath("$.processedAt").exists())
+                .andExpect(jsonPath("$.rejectionReason").value("Amount exceeds the simulated approval limit"));
+    }
+
+    @Test
+    @DisplayName("POST process deve retornar HTTP 404 quando o pagamento nao existir")
+    void processShouldReturn404WhenPaymentNotFound() throws Exception {
+        when(processPixPaymentUseCase.process(PAYMENT_ID))
+                .thenThrow(new PaymentNotFoundException(PAYMENT_ID));
+
+        mockMvc.perform(post("/api/v1/pix/payments/{paymentId}/process", PAYMENT_ID))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Payment not found"))
+                .andExpect(jsonPath("$.errors[0]").value("No payment was found for the provided paymentId"));
+    }
+
+    @Test
+    @DisplayName("POST process deve retornar HTTP 409 quando o pagamento ja estiver em status terminal")
+    void processShouldReturn409WhenPaymentIsTerminal() throws Exception {
+        when(processPixPaymentUseCase.process(PAYMENT_ID))
+                .thenThrow(new PaymentNotProcessableException());
+
+        mockMvc.perform(post("/api/v1/pix/payments/{paymentId}/process", PAYMENT_ID))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Payment cannot be processed"))
+                .andExpect(jsonPath("$.errors").isArray())
+                .andExpect(jsonPath("$.errors[0]").value("Payment is already in a terminal status"));
     }
 }
