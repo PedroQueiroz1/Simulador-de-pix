@@ -8,6 +8,7 @@ import io.pixsimulator.payment.application.idempotency.IdempotencyResponseData;
 import io.pixsimulator.payment.application.idempotency.IdempotencyService;
 import io.pixsimulator.payment.application.idempotency.IdempotencyStartResult;
 import io.pixsimulator.payment.application.idempotency.RequestFingerprintGenerator;
+import io.pixsimulator.payment.application.outbox.PaymentOutboxEventService;
 import io.pixsimulator.payment.application.port.out.IdGenerator;
 import io.pixsimulator.payment.application.port.out.PixPaymentRepository;
 import io.pixsimulator.payment.domain.exception.DomainException;
@@ -53,13 +54,17 @@ class CreatePixPaymentServiceTest {
     @Mock
     private IdempotencyService idempotencyService;
 
+    @Mock
+    private PaymentOutboxEventService paymentOutboxEventService;
+
     private final RequestFingerprintGenerator fingerprintGenerator = new RequestFingerprintGenerator();
 
     /** Gerador de ID deterministico para testes (substitui o UUIDv7 real). */
     private final IdGenerator idGenerator = () -> FIXED_ID;
 
     private CreatePixPaymentService service() {
-        return new CreatePixPaymentService(repository, idGenerator, fingerprintGenerator, idempotencyService);
+        return new CreatePixPaymentService(
+                repository, idGenerator, fingerprintGenerator, idempotencyService, paymentOutboxEventService);
     }
 
     private CreatePixPaymentCommand validCommand() {
@@ -84,7 +89,7 @@ class CreatePixPaymentServiceTest {
     }
 
     @Test
-    @DisplayName("Primeira requisicao deve criar e salvar o pagamento")
+    @DisplayName("Primeira criacao deve salvar Payment e OutboxEvent PAYMENT_CREATED")
     void firstRequestCreatesPayment() {
         when(idempotencyService.startOrReturn(eq(IDEMPOTENCY_KEY), anyString()))
                 .thenReturn(IdempotencyStartResult.newOperation());
@@ -99,6 +104,11 @@ class CreatePixPaymentServiceTest {
         verify(repository).save(captor.capture());
         assertEquals(FIXED_ID, captor.getValue().getId());
         assertEquals(IDEMPOTENCY_KEY, captor.getValue().getIdempotencyKey());
+
+        // Lote 6: o evento PAYMENT_CREATED e gravado na mesma transacao.
+        ArgumentCaptor<PixPayment> outboxCaptor = ArgumentCaptor.forClass(PixPayment.class);
+        verify(paymentOutboxEventService).recordPaymentCreated(outboxCaptor.capture());
+        assertEquals(FIXED_ID, outboxCaptor.getValue().getId());
     }
 
     @Test
@@ -133,7 +143,7 @@ class CreatePixPaymentServiceTest {
     }
 
     @Test
-    @DisplayName("Retry equivalente nao deve chamar PixPaymentRepository.save novamente")
+    @DisplayName("Retry idempotente equivalente nao deve salvar novo OutboxEvent")
     void retrySamePayloadDoesNotSaveAgain() {
         when(idempotencyService.startOrReturn(eq(IDEMPOTENCY_KEY), anyString()))
                 .thenReturn(IdempotencyStartResult.completed(storedResponse()));
@@ -142,6 +152,8 @@ class CreatePixPaymentServiceTest {
 
         verify(repository, never()).save(any(PixPayment.class));
         verify(idempotencyService, never()).complete(anyString(), anyString(), any());
+        // Lote 6: retry equivalente nao recria evento de Outbox.
+        verify(paymentOutboxEventService, never()).recordPaymentCreated(any());
     }
 
     @Test

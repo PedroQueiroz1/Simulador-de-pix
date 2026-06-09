@@ -52,6 +52,9 @@ class JpaPixPaymentRepositoryAdapterIntegrationTest {
                         + ";databaseName=master;encrypt=true;trustServerCertificate=true");
         registry.add("spring.datasource.username", SQL_SERVER::getUsername);
         registry.add("spring.datasource.password", SQL_SERVER::getPassword);
+        // Lote 6: o publisher assincrono nao deve rodar neste teste (evita ruido
+        // e bloqueio ao buscar conexao durante o shutdown do contexto).
+        registry.add("pix.outbox.publisher.enabled", () -> false);
     }
 
     @Autowired

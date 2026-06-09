@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../../Downloads/pix-transaction-simulator-lote-2-specs/docs"
+		},
+		{
+			"path": "../../Downloads/pix-transaction-simulator-lote-3-specs/docs"
+		}
+	],
+	"settings": {
+		"java.compile.nullAnalysis.mode": "automatic"
+	}
+}

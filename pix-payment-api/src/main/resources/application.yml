@@ -33,11 +33,34 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
 
+  # Lote 6: Kafka como broker de eventos (Transactional Outbox). O endereco do
+  # broker vem de variavel de ambiente; localmente aponta para o docker-compose.
+  # Chave e valor sao Strings (partitionKey e payload JSON).
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
 # Lote 3: configuracao de idempotencia.
 # ttl-seconds: tempo de vida do registro de idempotencia no Redis (24h).
 pix:
   idempotency:
     ttl-seconds: 86400
+
+  # Lote 6: Transactional Outbox + Kafka.
+  kafka:
+    topics:
+      # Topico unico dos eventos de pagamento (CREATED/APPROVED/REJECTED).
+      payment-events: ${PIX_PAYMENT_EVENTS_TOPIC:pix.payment.events}
+  outbox:
+    publisher:
+      # Liga/desliga o publisher; intervalo de varredura; tamanho do lote; e
+      # tentativas antes de marcar o evento como FAILED.
+      enabled: ${OUTBOX_PUBLISHER_ENABLED:true}
+      fixed-delay-ms: ${OUTBOX_PUBLISHER_FIXED_DELAY_MS:5000}
+      batch-size: ${OUTBOX_PUBLISHER_BATCH_SIZE:20}
+      max-attempts: ${OUTBOX_PUBLISHER_MAX_ATTEMPTS:5}
 
 server:
   port: 8080
