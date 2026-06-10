@@ -11,6 +11,10 @@ import java.util.UUID;
  * de dominio nem a Entity JPA diretamente. {@code eventId} e sempre igual ao
  * {@code id} do {@code OutboxEvent}, permitindo idempotencia por evento no
  * consumidor (Lote 7).
+ *
+ * <p>Lote 8: carrega o {@code correlationId} (lido do MDC pelo
+ * {@code PaymentOutboxEventService}), propagando a rastreabilidade da requisicao
+ * HTTP para o worker que consome o evento.
  */
 public record PaymentCreatedEventPayload(
         UUID eventId,
@@ -23,5 +27,6 @@ public record PaymentCreatedEventPayload(
         String receiverKey,
         BigDecimal amount,
         String description,
-        LocalDateTime createdAt) {
+        LocalDateTime createdAt,
+        String correlationId) {
 }

@@ -1,0 +1,13 @@
+# =============================================================================
+# Lote 10 — Namespace
+#
+# Isola todos os recursos do simulador em um unico namespace logico.
+# Demonstrativo: nao representa deploy real em cloud.
+# =============================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pix-simulator
+  labels:
+    app.kubernetes.io/part-of: pix-transaction-simulator
+    app.kubernetes.io/managed-by: argocd

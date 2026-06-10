@@ -31,6 +31,14 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
+        <!-- Lote 8: observabilidade operacional. Expoe apenas health/info
+             (exposicao limitada no application.yml), preparando health checks
+             para Docker/Kubernetes sem revelar endpoints sensiveis. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
         <!-- Lote 2: persistencia real com Spring Data JPA (Hibernate). -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -7,6 +7,8 @@ import io.pixsimulator.payment.domain.ledger.LedgerOperationType;
 import io.pixsimulator.payment.domain.ledger.LedgerTransaction;
 import io.pixsimulator.payment.domain.model.PixPayment;
 import io.pixsimulator.payment.domain.model.PixPaymentStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 
@@ -30,6 +32,8 @@ import java.time.LocalDateTime;
  */
 public class CreateLedgerForApprovedPaymentService implements CreateLedgerForApprovedPaymentUseCase {
 
+    private static final Logger log = LoggerFactory.getLogger(CreateLedgerForApprovedPaymentService.class);
+
     private final LedgerRepository ledgerRepository;
     private final IdGenerator idGenerator;
 
@@ -51,7 +55,12 @@ public class CreateLedgerForApprovedPaymentService implements CreateLedgerForApp
         // Idempotencia do Ledger: nao duplicar o settlement de um mesmo pagamento.
         return ledgerRepository
                 .findByPaymentIdAndOperationType(approvedPayment.getId(), LedgerOperationType.PIX_SETTLEMENT)
-                .orElseGet(() -> ledgerRepository.save(buildSettlement(approvedPayment)));
+                .orElseGet(() -> {
+                    LedgerTransaction ledger = ledgerRepository.save(buildSettlement(approvedPayment));
+                    log.info("Created ledger transaction {} (PIX_SETTLEMENT) for payment {}",
+                            ledger.getId(), approvedPayment.getId());
+                    return ledger;
+                });
     }
 
     private LedgerTransaction buildSettlement(PixPayment payment) {

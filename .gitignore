@@ -21,11 +21,11 @@ Thumbs.db
 *.log
 
 # Variaveis sensiveis (senha, login, nome de banco, URLs com credenciais).
-# NUNCA versionar o .env. Apenas o template .env.example vai para o Git.
+# NUNCA versionar o .env nem variantes (.env.local, .env.prod...). Apenas o
+# template .env.example (somente placeholders) vai para o Git.
 .env
 .env.*
 !.env.example
-.env.example
 
 docs/*
 .claude/*

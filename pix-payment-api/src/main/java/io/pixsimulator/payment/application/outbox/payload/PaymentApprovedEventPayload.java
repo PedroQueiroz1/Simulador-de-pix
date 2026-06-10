@@ -12,6 +12,9 @@ import java.util.UUID;
  * financeiro corresponde ao pagamento aprovado, sem precisar de um evento
  * separado de Ledger neste lote. {@code eventId} e igual ao {@code id} do
  * {@code OutboxEvent}.
+ *
+ * <p>Lote 8: carrega o {@code correlationId} (lido do MDC), propagando a
+ * rastreabilidade ate o worker.
  */
 public record PaymentApprovedEventPayload(
         UUID eventId,
@@ -24,5 +27,6 @@ public record PaymentApprovedEventPayload(
         String receiverKey,
         BigDecimal amount,
         LocalDateTime processedAt,
-        UUID ledgerTransactionId) {
+        UUID ledgerTransactionId,
+        String correlationId) {
 }

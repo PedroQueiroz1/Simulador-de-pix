@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Herda a gestao de versoes do parent multi-module. -->
+    <parent>
+        <groupId>io.pixsimulator</groupId>
+        <artifactId>pix-transaction-simulator</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>pix-notification-worker</artifactId>
+    <packaging>jar</packaging>
+
+    <name>pix-notification-worker</name>
+    <description>Pix Notification Worker - consumidor Kafka + auditoria MongoDB (Lote 7)</description>
+
+    <dependencies>
+        <!-- Lote 7: consumidor Kafka (@KafkaListener). Traz a auto-config do
+             consumer; as versoes sao geridas pelo Spring Boot parent. -->
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+        </dependency>
+
+        <!-- Lote 8: camada web minima apenas para servir os endpoints
+             operacionais do Actuator (health/info). O worker continua orientado
+             a eventos: nao ha endpoint REST de negocio. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- Lote 8: observabilidade operacional. Expoe apenas health/info,
+             preparando health checks para Docker/Kubernetes. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- Lote 7: persistencia de auditoria em MongoDB (Spring Data MongoDB).
+             Traz o driver do Mongo + MongoTemplate + repositorios. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-mongodb</artifactId>
+        </dependency>
+
+        <!-- Jackson + JavaTimeModule (jsr310). Necessario para desserializar o
+             JSON dos eventos com LocalDateTime no MESMO formato ISO-8601 em que o
+             pix-payment-api serializa (defaults do Spring Boot dos dois lados). -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-json</artifactId>
+        </dependency>
+
+        <!-- JUnit 5, Mockito e Spring Boot Test. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Lote 7: utilitarios de teste do Spring Kafka (disponiveis para um
+             teste de integracao Kafka opcional em lote futuro). -->
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Lote 7: testes de integracao com MongoDB real via Testcontainers. -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>mongodb</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

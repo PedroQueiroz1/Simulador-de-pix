@@ -80,7 +80,7 @@ public class OutboxPublisher {
             // ate o broker confirmar, para so marcar PUBLISHED apos o ack.
             kafkaTemplate.send(event.getTopic(), event.getPartitionKey(), event.getPayload()).get();
             outboxRepository.markAsPublished(event.getId(), LocalDateTime.now());
-            log.debug("Published outbox event {} ({}) to topic {}",
+            log.info("Published outbox event {} ({}) to topic {}",
                     event.getId(), event.getEventType(), event.getTopic());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

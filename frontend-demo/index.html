@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pix Transaction Simulator — Demo</title>
+  <link rel="stylesheet" href="styles.css" />
+  <!--
+    Configuração da URL base da API (Lote 10).
+    config.js define window.API_BASE_URL. No Docker Compose ele é gerado a partir
+    da variável de ambiente API_BASE_URL. Se vazio, o app usa o mesmo host do
+    frontend (o nginx faz proxy de /api e /actuator para a pix-payment-api).
+  -->
+  <script src="config.js"></script>
+</head>
+<body>
+  <header class="app-header">
+    <h1>Pix Transaction Simulator</h1>
+    <p class="subtitle">Frontend demo — HTML, CSS e JavaScript puro</p>
+    <p class="api-line">API base URL: <code id="apiBaseUrlLabel">(mesma origem)</code></p>
+  </header>
+
+  <main class="grid">
+
+    <!-- 1) Criar Pix -->
+    <section class="card">
+      <h2>1. Criar Pix</h2>
+      <form id="createForm" autocomplete="off">
+        <label>payerKey
+          <input id="payerKey" type="text" value="alice@example.com" required />
+        </label>
+        <label>receiverKey
+          <input id="receiverKey" type="text" value="bob@example.com" required />
+        </label>
+        <label>amount
+          <input id="amount" type="number" step="0.01" min="0.01" value="150.75" required />
+        </label>
+        <label>description
+          <input id="description" type="text" value="Pagamento de teste" />
+        </label>
+        <label>Idempotency-Key
+          <div class="inline">
+            <input id="idempotencyKey" type="text" required />
+            <button type="button" class="ghost" data-uuid-target="idempotencyKey">novo</button>
+          </div>
+        </label>
+        <label>X-Correlation-Id <span class="muted">(opcional)</span>
+          <div class="inline">
+            <input id="correlationId" type="text" />
+            <button type="button" class="ghost" data-uuid-target="correlationId">novo</button>
+          </div>
+        </label>
+        <button type="submit" class="primary">POST /api/v1/pix/payments</button>
+      </form>
+      <div id="createResult" class="result" aria-live="polite"></div>
+    </section>
+
+    <!-- paymentId compartilhado -->
+    <section class="card highlight">
+      <h2>Payment em foco</h2>
+      <label>paymentId
+        <input id="paymentId" type="text" placeholder="preenchido após criar um Pix" />
+      </label>
+      <p class="muted">Criar um Pix preenche este campo automaticamente. As ações 2, 3 e 4 usam este id.</p>
+    </section>
+
+    <!-- 2) Consultar Pix -->
+    <section class="card">
+      <h2>2. Consultar Pix</h2>
+      <button id="getBtn" class="primary">GET /api/v1/pix/payments/{paymentId}</button>
+      <div id="getResult" class="result" aria-live="polite"></div>
+    </section>
+
+    <!-- 3) Processar Pix -->
+    <section class="card">
+      <h2>3. Processar Pix</h2>
+      <p class="muted">amount &le; 5000 &rarr; APPROVED · amount &gt; 5000 &rarr; REJECTED</p>
+      <button id="processBtn" class="primary">POST /api/v1/pix/payments/{paymentId}/process</button>
+      <div id="processResult" class="result" aria-live="polite"></div>
+    </section>
+
+    <!-- 4) Consultar Ledger -->
+    <section class="card">
+      <h2>4. Consultar Ledger</h2>
+      <p class="muted">APPROVED gera DEBIT/CREDIT · REJECTED não gera ledger</p>
+      <button id="ledgerBtn" class="primary">GET /api/v1/pix/payments/{paymentId}/ledger</button>
+      <div id="ledgerResult" class="result" aria-live="polite"></div>
+    </section>
+
+  </main>
+
+  <footer class="app-footer">
+    <p>Demonstrativo. Sem autenticação, sem framework. Lote 10.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

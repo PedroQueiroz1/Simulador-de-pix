@@ -1,0 +1,39 @@
+# =============================================================================
+# Lote 10 — ConfigMap (apenas variaveis NAO sensiveis)
+#
+# Aqui ficam SOMENTE valores nao sensiveis: hosts/portas de infraestrutura,
+# topicos, group-id e parametros do publisher da Outbox. Nada de senha, usuario,
+# nome real de banco ou connection string — esses vivem no Secret (ver
+# secret-example.yaml) e, na pratica, viriam de um gerenciador de secrets.
+#
+# Os hostnames abaixo sao PLACEHOLDERS. Em um cluster real, aponte-os para a
+# infraestrutura gerenciada (SQL Server / Redis / Kafka / MongoDB).
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pix-simulator-config
+  namespace: pix-simulator
+  labels:
+    app.kubernetes.io/part-of: pix-transaction-simulator
+data:
+  # ----- Infraestrutura (placeholders — ajuste para o ambiente real) -----
+  SQLSERVER_HOST: "sqlserver"
+  SQLSERVER_PORT: "1433"
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+
+  # ----- Topicos / consumer -----
+  PIX_PAYMENT_EVENTS_TOPIC: "pix.payment.events"
+  KAFKA_CONSUMER_GROUP_ID: "pix-notification-worker"
+
+  # ----- Portas das aplicacoes -----
+  PAYMENT_API_PORT: "8080"
+  NOTIFICATION_WORKER_PORT: "8081"
+
+  # ----- Publisher assincrono da Outbox (Lote 6) -----
+  OUTBOX_PUBLISHER_ENABLED: "true"
+  OUTBOX_PUBLISHER_FIXED_DELAY_MS: "5000"
+  OUTBOX_PUBLISHER_BATCH_SIZE: "20"
+  OUTBOX_PUBLISHER_MAX_ATTEMPTS: "5"

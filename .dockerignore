@@ -1,0 +1,27 @@
+# Contexto de build das imagens Docker. Mantem o contexto pequeno e, sobretudo,
+# impede que segredos ou artefatos locais entrem na imagem.
+
+# Controle de versao / IDEs
+.git
+.gitignore
+.idea
+.vscode
+
+# Artefatos de build Maven
+target
+**/target
+
+# Segredos e variaveis de ambiente — NUNCA enviar para a imagem.
+# (.env.example fica de fora do build: a imagem nao precisa dele.)
+.env
+.env.*
+
+# Logs
+*.log
+
+# Documentacao e material de estudo (nao participam do build)
+docs
+
+# Scripts/auxiliares locais
+run-local.ps1
+*.code-workspace

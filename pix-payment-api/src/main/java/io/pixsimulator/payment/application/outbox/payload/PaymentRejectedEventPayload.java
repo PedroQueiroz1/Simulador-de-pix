@@ -10,6 +10,9 @@ import java.util.UUID;
  * <p>Carrega o {@code rejectionReason} (motivo simulado da recusa). Pagamento
  * rejeitado nao movimenta valor: nao ha Ledger nem {@code ledgerTransactionId}.
  * {@code eventId} e igual ao {@code id} do {@code OutboxEvent}.
+ *
+ * <p>Lote 8: carrega o {@code correlationId} (lido do MDC), propagando a
+ * rastreabilidade ate o worker.
  */
 public record PaymentRejectedEventPayload(
         UUID eventId,
@@ -22,5 +25,6 @@ public record PaymentRejectedEventPayload(
         String receiverKey,
         BigDecimal amount,
         LocalDateTime processedAt,
-        String rejectionReason) {
+        String rejectionReason,
+        String correlationId) {
 }

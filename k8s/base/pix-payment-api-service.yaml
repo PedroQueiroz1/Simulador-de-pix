@@ -1,0 +1,22 @@
+# =============================================================================
+# Lote 10 — Service: pix-payment-api
+#
+# Expoe a API HTTP dentro do cluster (ClusterIP). Acesso externo ficaria a cargo
+# de um Ingress/LoadBalancer, fora do escopo deste lote demonstrativo.
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: pix-payment-api
+  namespace: pix-simulator
+  labels:
+    app.kubernetes.io/name: pix-payment-api
+    app.kubernetes.io/part-of: pix-transaction-simulator
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: pix-payment-api
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

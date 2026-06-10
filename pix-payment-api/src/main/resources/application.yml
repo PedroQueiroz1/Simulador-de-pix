@@ -3,13 +3,15 @@ spring:
     name: pix-payment-api
 
   # Persistencia real em SQL Server.
-  # Valores sensiveis (URL com nome do banco, usuario e senha) NUNCA ficam aqui:
-  # vem de variaveis de ambiente, definidas no .env (ver .env.example e README).
-  # Os testes de integracao sobrescrevem estas propriedades via Testcontainers.
+  # A URL JDBC e montada a partir de variaveis de ambiente. Host/porta tem
+  # default local (nao sensivel); nome do banco, usuario e senha NUNCA tem
+  # default e vem do .env (ver .env.example) — fora do Git. Em Docker, o host
+  # aponta para o servico "sqlserver". Os testes de integracao sobrescrevem
+  # spring.datasource.* via Testcontainers.
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: jdbc:sqlserver://${SQLSERVER_HOST:localhost}:${SQLSERVER_PORT:1433};databaseName=${SQLSERVER_DATABASE};encrypt=true;trustServerCertificate=true
+    username: ${SQLSERVER_USERNAME}
+    password: ${SQLSERVER_PASSWORD}
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
 
   jpa:
@@ -63,8 +65,28 @@ pix:
       max-attempts: ${OUTBOX_PUBLISHER_MAX_ATTEMPTS:5}
 
 server:
-  port: 8080
+  # Porta da API. Default 8080 (nao sensivel); sobreposta via PAYMENT_API_PORT.
+  port: ${PAYMENT_API_PORT:8080}
   # Nunca expor stack trace nem mensagem interna no corpo das respostas de erro.
   error:
     include-stacktrace: never
     include-message: never
+
+# Lote 8: Actuator com exposicao limitada. Apenas health/info ficam acessiveis
+# via web; endpoints sensiveis (env, beans, heapdump, threaddump) NAO sao
+# expostos. health.show-details=never evita vazar detalhes de infraestrutura.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+
+# Lote 8: rastreabilidade nos logs. O CorrelationIdFilter coloca correlationId,
+# requestId e paymentId no MDC; o padrao abaixo os imprime em cada linha (vazio
+# quando ausente). NUNCA logamos senhas, tokens, secrets nem connection strings.
+logging:
+  pattern:
+    level: "%5p [correlationId=%X{correlationId:-} requestId=%X{requestId:-} paymentId=%X{paymentId:-}]"

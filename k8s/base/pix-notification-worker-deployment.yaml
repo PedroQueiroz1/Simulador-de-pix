@@ -1,0 +1,68 @@
+# =============================================================================
+# Lote 10 — Deployment: pix-notification-worker
+#
+# Servico orientado a eventos (consumer Kafka + auditoria MongoDB). Sobe uma
+# camada web minima apenas para o Actuator (Lote 8), usada como health check.
+# A connection string do Mongo (com credenciais) vem do Secret de exemplo.
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pix-notification-worker
+  namespace: pix-simulator
+  labels:
+    app.kubernetes.io/name: pix-notification-worker
+    app.kubernetes.io/part-of: pix-transaction-simulator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: pix-notification-worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: pix-notification-worker
+        app.kubernetes.io/part-of: pix-transaction-simulator
+    spec:
+      containers:
+        - name: pix-notification-worker
+          # Imagem placeholder — publique a sua e ajuste a tag conforme necessario.
+          image: pedroqueiroz/pix-notification-worker:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8081
+          # Variaveis nao sensiveis (Kafka, topico, group-id, porta).
+          envFrom:
+            - configMapRef:
+                name: pix-simulator-config
+          # Sensivel: MONGO_URI (contem usuario/senha) vem do Secret.
+          env:
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: pix-simulator-secret
+                  key: MONGO_URI
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            initialDelaySeconds: 40
+            periodSeconds: 15
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"

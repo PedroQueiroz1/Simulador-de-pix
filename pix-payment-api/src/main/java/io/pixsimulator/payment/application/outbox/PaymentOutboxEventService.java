@@ -8,6 +8,10 @@ import io.pixsimulator.payment.application.outbox.payload.PaymentRejectedEventPa
 import io.pixsimulator.payment.application.port.out.IdGenerator;
 import io.pixsimulator.payment.application.port.out.OutboxRepository;
 import io.pixsimulator.payment.domain.model.PixPayment;
+import io.pixsimulator.payment.observability.MdcKeys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -37,6 +41,8 @@ import java.util.UUID;
  */
 public class PaymentOutboxEventService {
 
+    private static final Logger log = LoggerFactory.getLogger(PaymentOutboxEventService.class);
+
     /** Tipo de agregado dos eventos de pagamento. */
     static final String AGGREGATE_TYPE_PAYMENT = "PAYMENT";
 
@@ -62,6 +68,7 @@ public class PaymentOutboxEventService {
     public OutboxEvent recordPaymentCreated(PixPayment payment) {
         UUID eventId = idGenerator.generate();
         LocalDateTime now = LocalDateTime.now();
+        String correlationId = currentCorrelationId();
 
         PaymentCreatedEventPayload payload = new PaymentCreatedEventPayload(
                 eventId,
@@ -74,7 +81,8 @@ public class PaymentOutboxEventService {
                 payment.getReceiverKey(),
                 payment.getAmount(),
                 payment.getDescription(),
-                payment.getCreatedAt());
+                payment.getCreatedAt(),
+                correlationId);
 
         return saveEvent(eventId, payment.getId(), PaymentEventType.PAYMENT_CREATED, payload, now);
     }
@@ -86,6 +94,7 @@ public class PaymentOutboxEventService {
     public OutboxEvent recordPaymentApproved(PixPayment payment, UUID ledgerTransactionId) {
         UUID eventId = idGenerator.generate();
         LocalDateTime now = LocalDateTime.now();
+        String correlationId = currentCorrelationId();
 
         PaymentApprovedEventPayload payload = new PaymentApprovedEventPayload(
                 eventId,
@@ -98,7 +107,8 @@ public class PaymentOutboxEventService {
                 payment.getReceiverKey(),
                 payment.getAmount(),
                 payment.getProcessedAt(),
-                ledgerTransactionId);
+                ledgerTransactionId,
+                correlationId);
 
         return saveEvent(eventId, payment.getId(), PaymentEventType.PAYMENT_APPROVED, payload, now);
     }
@@ -107,6 +117,7 @@ public class PaymentOutboxEventService {
     public OutboxEvent recordPaymentRejected(PixPayment payment) {
         UUID eventId = idGenerator.generate();
         LocalDateTime now = LocalDateTime.now();
+        String correlationId = currentCorrelationId();
 
         PaymentRejectedEventPayload payload = new PaymentRejectedEventPayload(
                 eventId,
@@ -119,7 +130,8 @@ public class PaymentOutboxEventService {
                 payment.getReceiverKey(),
                 payment.getAmount(),
                 payment.getProcessedAt(),
-                payment.getRejectionReason());
+                payment.getRejectionReason(),
+                correlationId);
 
         return saveEvent(eventId, payment.getId(), PaymentEventType.PAYMENT_REJECTED, payload, now);
     }
@@ -140,7 +152,21 @@ public class PaymentOutboxEventService {
                 serialize(payload),
                 now);
 
-        return outboxRepository.save(event);
+        OutboxEvent saved = outboxRepository.save(event);
+        // Rastreabilidade: liga o OutboxEvent ao pagamento e ao correlationId
+        // corrente (que ja segue dentro do payload publicado no Kafka).
+        log.info("Created outbox event {} ({}) for payment {}",
+                saved.getId(), eventType.name(), paymentId);
+        return saved;
+    }
+
+    /**
+     * Le o correlationId do MDC (definido pelo {@code CorrelationIdFilter} na
+     * borda HTTP). Pode ser nulo em fluxos sem requisicao HTTP associada; nesse
+     * caso o evento ainda e publicado, apenas sem correlationId.
+     */
+    private static String currentCorrelationId() {
+        return MDC.get(MdcKeys.CORRELATION_ID);
     }
 
     private String serialize(Object payload) {

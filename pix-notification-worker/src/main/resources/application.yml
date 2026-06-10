@@ -1,0 +1,62 @@
+spring:
+  application:
+    name: pix-notification-worker
+
+  # Lote 8: o worker passa a subir uma camada web minima (servlet) apenas para
+  # servir os endpoints operacionais do Actuator (health/info) — usados como
+  # health check em Docker/Kubernetes. NAO ha endpoint REST de negocio: o worker
+  # continua orientado a eventos (consumo Kafka + auditoria MongoDB).
+  main:
+    web-application-type: servlet
+
+  # Lote 7: auditoria de notificacoes no MongoDB. A URI vem de variavel de
+  # ambiente; o default local NAO contem credenciais (Mongo local sem auth).
+  # Em ambientes com auth, defina MONGO_URI com usuario/senha no .env (fora do Git).
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://localhost:27017/pix_notifications}
+      # Cria os indices declarados nos documentos (@Indexed) na subida da app —
+      # garante o indice unico de eventId que sustenta a idempotencia de consumo.
+      auto-index-creation: true
+
+  # Lote 7: consumidor Kafka. Endereco do broker, group-id e desserializadores.
+  # Chave e valor sao Strings (o payload e o JSON cru publicado pelo Lote 6).
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: ${KAFKA_CONSUMER_GROUP_ID:pix-notification-worker}
+      # Worker novo comeca do inicio do topico para nao perder eventos ja publicados.
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+# Lote 7: topico e group-id tambem expostos via prefixo pix.kafka, lidos pelo
+# @KafkaListener. Defaults nao sensiveis cobrem o ambiente local.
+pix:
+  kafka:
+    topics:
+      payment-events: ${PIX_PAYMENT_EVENTS_TOPIC:pix.payment.events}
+    consumer:
+      group-id: ${KAFKA_CONSUMER_GROUP_ID:pix-notification-worker}
+
+# Lote 8/9: porta da camada web minima (somente Actuator). Diferente da API
+# (8080) para nao conflitar localmente. Sobreposta via NOTIFICATION_WORKER_PORT.
+server:
+  port: ${NOTIFICATION_WORKER_PORT:8081}
+
+# Lote 8: Actuator com exposicao limitada (apenas health/info). Endpoints
+# sensiveis (env, beans, heapdump, threaddump) NAO sao expostos.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+
+# Lote 8: rastreabilidade nos logs do worker. O handler coloca correlationId e
+# eventId no MDC durante o processamento; o padrao abaixo os imprime por linha.
+logging:
+  pattern:
+    level: "%5p [correlationId=%X{correlationId:-} eventId=%X{eventId:-}]"

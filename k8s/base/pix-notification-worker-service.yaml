@@ -1,0 +1,23 @@
+# =============================================================================
+# Lote 10 — Service: pix-notification-worker
+#
+# O worker e orientado a eventos e nao expoe API de negocio. Este Service existe
+# apenas para alcancar a porta HTTP minima do Actuator (health/info) dentro do
+# cluster — util para health checks e inspecao operacional.
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: pix-notification-worker
+  namespace: pix-simulator
+  labels:
+    app.kubernetes.io/name: pix-notification-worker
+    app.kubernetes.io/part-of: pix-transaction-simulator
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: pix-notification-worker
+  ports:
+    - name: http
+      port: 8081
+      targetPort: http

@@ -1,0 +1,93 @@
+name: CI
+
+# Lote 9 — build + testes a cada push e pull request.
+# Sem segredos reais; nenhum .env real e usado. Testcontainers funciona porque
+# o runner ubuntu-latest ja tem Docker disponivel.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+# Cancela execucoes antigas do mesmo ref quando um novo push chega.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # DevSecOps: falha se algum .env (exceto .env.example) estiver rastreado.
+      - name: Guard - nenhum .env rastreado
+        run: |
+          tracked="$(git ls-files | grep -E '(^|/)\.env($|\.)' | grep -vE '(^|/)\.env\.example$' || true)"
+          if [ -n "$tracked" ]; then
+            echo "::error::Arquivo .env (ou variante) rastreado no Git: $tracked"
+            echo ".env deve permanecer no .gitignore. Apenas .env.example pode ser versionado."
+            exit 1
+          fi
+          echo "OK: nenhum .env sensivel rastreado."
+
+      - name: Setup Java 17 (Temurin) + cache Maven
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      # Testcontainers (SQL Server, Redis, MongoDB) usam o Docker do runner.
+      - name: Build e testes
+        run: mvn -B clean test
+
+      - name: Publicar relatorios de teste (surefire)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: "**/target/surefire-reports/**"
+          if-no-files-found: warn
+
+      - name: Publicar relatorio de cobertura (JaCoCo)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-reports
+          path: "**/target/site/jacoco/**"
+          if-no-files-found: warn
+
+  # OWASP Dependency Check isolado e MANUAL (workflow_dispatch): a base do NVD e
+  # pesada e sem API key pode ser lenta/instavel, entao nao bloqueia o CI normal.
+  # Rode localmente com: mvn -Psecurity verify
+  dependency-check:
+    name: OWASP Dependency Check (manual)
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17 (Temurin) + cache Maven
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      # Sem credenciais hardcoded. Para acelerar/estabilizar o download do NVD,
+      # configure o secret NVD_API_KEY no repositorio (opcional) e adicione
+      # -DnvdApiKey=${{ secrets.NVD_API_KEY }} ao comando abaixo.
+      - name: Analise de dependencias
+        run: mvn -B -Psecurity verify -DskipTests
+
+      - name: Publicar relatorio do Dependency Check
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: "**/target/dependency-check-report.*"
+          if-no-files-found: warn

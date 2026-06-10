@@ -1,0 +1,46 @@
+# =============================================================================
+# Lote 10 — Argo CD Application (demonstração de GitOps)
+#
+# Declara o estado desejado do deploy: o Argo CD observa o repositório Git e
+# sincroniza os manifests de `k8s/base` para o namespace `pix-simulator`.
+# Demonstrativo — não pressupõe deploy real em cloud.
+#
+# Aplicar (no cluster onde o Argo CD está instalado):
+#   kubectl apply -n argocd -f argocd/pix-simulator-application.yaml
+#
+# Secrets: NÃO ficam aqui. Em produção, viriam de Sealed Secrets, External
+# Secrets, Vault ou do gerenciador de secrets da cloud. O `secret-example.yaml`
+# em k8s/base é apenas um modelo com placeholders.
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: pix-simulator
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: pix-transaction-simulator
+  # Evita que o Argo CD remova a Application antes de limpar os recursos filhos.
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/PedroQueiroz1/Simulador-de-pix.git
+    targetRevision: HEAD
+    path: k8s/base
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: pix-simulator
+
+  syncPolicy:
+    # Sync automatizado para demonstrar GitOps de ponta a ponta. Em produção,
+    # automated vs. manual é uma decisão de GOVERNANÇA do time (controle de
+    # mudança, janelas de deploy, aprovações). Para sync manual, remova o bloco
+    # `automated` abaixo e sincronize pela UI/CLI do Argo CD.
+    automated:
+      prune: true       # remove recursos que saíram do Git
+      selfHeal: true    # reverte alterações feitas direto no cluster
+    syncOptions:
+      - CreateNamespace=true   # cria o namespace pix-simulator se não existir

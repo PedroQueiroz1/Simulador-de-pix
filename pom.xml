@@ -20,9 +20,11 @@
     <name>pix-transaction-simulator</name>
     <description>Pix Transaction Simulator - Maven parent multi-module (Lote 1)</description>
 
-    <!-- Maven parent multi-module: o Lote 1 declara apenas o pix-payment-api. -->
+    <!-- Maven parent multi-module. Lote 7 adiciona o segundo microservico:
+         o pix-notification-worker (consumidor Kafka + auditoria em MongoDB). -->
     <modules>
         <module>pix-payment-api</module>
+        <module>pix-notification-worker</module>
     </modules>
 
     <properties>
@@ -32,6 +34,9 @@
         <!-- Versao do Testcontainers (o BOM e importado abaixo). O Spring Boot
              parent ja gerencia Flyway, mssql-jdbc e Spring Data JPA. -->
         <testcontainers.version>1.20.4</testcontainers.version>
+        <!-- Lote 9: DevSecOps. JaCoCo (cobertura) e OWASP Dependency Check. -->
+        <jacoco.version>0.8.12</jacoco.version>
+        <dependency-check.version>10.0.4</dependency-check.version>
     </properties>
 
     <!-- Centraliza versoes para os modulos filhos. Alem do UUIDv7, importa o
@@ -53,5 +58,71 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <!-- Lote 9: JaCoCo herdado pelos modulos filhos. prepare-agent instrumenta
+         os testes; report (fase test) gera o relatorio em target/site/jacoco
+         apos `mvn clean test`. Threshold de cobertura NAO e exigido neste lote
+         (gerar relatorio e o objetivo). -->
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
+                <executions>
+                    <execution>
+                        <id>jacoco-prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>jacoco-report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <!-- Lote 9: analise de dependencias (OWASP Dependency Check) isolada num
+         profile, para NAO deixar o build/CI normal lento. Roda sob demanda:
+             mvn -Psecurity verify
+         Report-only por enquanto (failBuildOnCVSS=11 > 10 = nunca quebra). Sem
+         API key real: se um dia usar NVD API key, ela vem de GitHub Secrets. -->
+    <profiles>
+        <profile>
+            <id>security</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.owasp</groupId>
+                        <artifactId>dependency-check-maven</artifactId>
+                        <version>${dependency-check.version}</version>
+                        <configuration>
+                            <failBuildOnCVSS>11</failBuildOnCVSS>
+                            <formats>
+                                <format>HTML</format>
+                                <format>JSON</format>
+                            </formats>
+                            <suppressionFiles>
+                                <suppressionFile>${maven.multiModuleProjectDirectory}/dependency-check-suppressions.xml</suppressionFile>
+                            </suppressionFiles>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>

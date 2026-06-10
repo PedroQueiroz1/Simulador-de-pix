@@ -11,6 +11,10 @@ import io.pixsimulator.payment.application.port.in.CreatePixPaymentUseCase;
 import io.pixsimulator.payment.application.port.out.IdGenerator;
 import io.pixsimulator.payment.application.port.out.PixPaymentRepository;
 import io.pixsimulator.payment.domain.model.PixPayment;
+import io.pixsimulator.payment.observability.MdcKeys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
@@ -46,6 +50,8 @@ import java.util.UUID;
  */
 public class CreatePixPaymentService implements CreatePixPaymentUseCase {
 
+    private static final Logger log = LoggerFactory.getLogger(CreatePixPaymentService.class);
+
     private final PixPaymentRepository repository;
     private final IdGenerator idGenerator;
     private final RequestFingerprintGenerator fingerprintGenerator;
@@ -76,10 +82,14 @@ public class CreatePixPaymentService implements CreatePixPaymentUseCase {
 
         if (start.isCompleted()) {
             // Retry equivalente: devolve a resposta original, sem recriar nada.
-            return IdempotencyResponseMapper.toResult(start.response().orElseThrow());
+            CreatePixPaymentResult cached =
+                    IdempotencyResponseMapper.toResult(start.response().orElseThrow());
+            log.info("Idempotent retry: returning existing payment {} without recreating", cached.paymentId());
+            return cached;
         }
 
         UUID id = idGenerator.generate();
+        MDC.put(MdcKeys.PAYMENT_ID, id.toString());
 
         PixPayment payment = PixPayment.create(
                 id,
@@ -91,6 +101,7 @@ public class CreatePixPaymentService implements CreatePixPaymentUseCase {
         );
 
         PixPayment saved = repository.save(payment);
+        log.info("Created payment {} with status {}", saved.getId(), saved.getStatus());
 
         // Outbox na MESMA transacao do pagamento (ADR-025): se o evento falhar,
         // o INSERT do pagamento sofre rollback junto. So acontece para criacao

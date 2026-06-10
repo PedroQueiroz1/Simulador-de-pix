@@ -9,6 +9,10 @@ import io.pixsimulator.payment.application.port.in.ProcessPixPaymentUseCase;
 import io.pixsimulator.payment.application.port.out.PixPaymentRepository;
 import io.pixsimulator.payment.domain.ledger.LedgerTransaction;
 import io.pixsimulator.payment.domain.model.PixPayment;
+import io.pixsimulator.payment.observability.MdcKeys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -48,6 +52,8 @@ import java.util.UUID;
  */
 public class ProcessPixPaymentService implements ProcessPixPaymentUseCase {
 
+    private static final Logger log = LoggerFactory.getLogger(ProcessPixPaymentService.class);
+
     /** Limite simulado de aprovacao (inclusive). */
     static final BigDecimal APPROVAL_LIMIT = new BigDecimal("5000.00");
 
@@ -69,6 +75,8 @@ public class ProcessPixPaymentService implements ProcessPixPaymentUseCase {
     @Override
     @Transactional
     public ProcessPixPaymentResult process(UUID paymentId) {
+        MDC.put(MdcKeys.PAYMENT_ID, paymentId.toString());
+
         PixPayment payment = repository.findById(paymentId)
                 .orElseThrow(() -> new PaymentNotFoundException(paymentId));
 
@@ -90,6 +98,7 @@ public class ProcessPixPaymentService implements ProcessPixPaymentUseCase {
             // Mesma transacao: aprovado => OutboxEvent obrigatorio, carregando o
             // ledgerTransactionId do settlement recem-criado.
             paymentOutboxEventService.recordPaymentApproved(saved, ledger.getId());
+            log.info("Payment {} APPROVED; ledger transaction {} created", saved.getId(), ledger.getId());
             return toResult(saved);
         }
 
@@ -98,6 +107,7 @@ public class ProcessPixPaymentService implements ProcessPixPaymentUseCase {
         // Rejeitado nao movimenta valor: nenhum Ledger e criado, mas o evento
         // PAYMENT_REJECTED e gravado na mesma transacao.
         paymentOutboxEventService.recordPaymentRejected(saved);
+        log.info("Payment {} REJECTED: {}", saved.getId(), saved.getRejectionReason());
         return toResult(saved);
     }
 

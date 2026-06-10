@@ -1,41 +1,71 @@
-# Subir:  docker compose up -d sqlserver redis kafka
+# =============================================================================
+# Ambiente local completo (Lote 9).
 #
-# O database NAO e criado automaticamente. Com o .env carregado no shell,
-# crie-o uma unica vez:
+# Todos os valores sensiveis vem do .env (no .gitignore) — NUNCA hardcodados
+# aqui. Use o .env.example como template:  cp .env.example .env
+#
+# Perfis:
+#   - infraestrutura (sqlserver, redis, kafka, mongodb): SEM profile, sobem
+#     sempre. E o fluxo de dev padrao: infra no Docker + apps via Maven.
+#   - aplicacoes (pix-payment-api, pix-notification-worker): profile "apps",
+#     sobem apenas quando solicitado.
+#
+# Comandos uteis:
+#   docker compose config                         # valida (so infra no output)
+#   docker compose --profile apps config          # valida infra + apps
+#   docker compose up -d                          # sobe so a infraestrutura
+#   docker compose --profile apps up --build      # sobe infra + apps
+#
+# SQL Server: o database NAO e criado automaticamente. Com a infra no ar e o
+# .env carregado, crie-o uma unica vez:
 #   docker exec -i pix-sqlserver /opt/mssql-tools18/bin/sqlcmd \
-#     -S localhost -U "$DB_USERNAME" -P "$DB_PASSWORD" -C \
-#     -Q "IF DB_ID('$DB_NAME') IS NULL CREATE DATABASE [$DB_NAME];"
+#     -S localhost -U "$SQLSERVER_USERNAME" -P "$SQLSERVER_PASSWORD" -C \
+#     -Q "IF DB_ID('$SQLSERVER_DATABASE') IS NULL CREATE DATABASE [$SQLSERVER_DATABASE];"
+# As tabelas sao criadas pelo Flyway quando a pix-payment-api sobe. O MongoDB
+# cria o database/indices quando o pix-notification-worker sobe.
 #
-# As tabelas sao criadas pelo Flyway quando a aplicacao sobe.
-# Os testes de integracao NAO usam este compose: sobem SQL Server e Redis
-# via Testcontainers.
+# Kafka roda em modo KRaft (sem Zookeeper), no unico. Dois listeners:
+#   - EXTERNAL (localhost:9092): apps rodando no HOST (mvn spring-boot:run);
+#   - INTERNAL (kafka:29092): apps rodando DENTRO da rede do compose.
+# =============================================================================
+
 services:
+
+  # ----------------------------- Infraestrutura -----------------------------
+
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: pix-sqlserver
     environment:
       ACCEPT_EULA: "Y"
-      # Senha lida do .env. Falha cedo, com mensagem clara, se nao estiver definida.
-      MSSQL_SA_PASSWORD: "${DB_PASSWORD:?defina DB_PASSWORD no arquivo .env}"
+      # Senha lida do .env. Falha cedo, com mensagem clara, se nao definida.
+      MSSQL_SA_PASSWORD: "${SQLSERVER_PASSWORD:?defina SQLSERVER_PASSWORD no arquivo .env}"
     ports:
-      - "1433:1433"
+      - "${SQLSERVER_PORT:-1433}:1433"
     volumes:
-      - pix-sqlserver-data:/var/opt/mssql
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
-  # Lote 3: Redis como camada de controle de idempotencia.
-  # Sem volume: registros de idempotencia sao temporarios (TTL) e nao precisam
-  # sobreviver a reinicializacao do container.
+  # Redis: controle de idempotencia (TTL nativo). Sem volume: registros sao
+  # temporarios e nao precisam sobreviver ao restart do container.
   redis:
     image: redis:7-alpine
     container_name: pix-redis
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
 
-  # Lote 6: Kafka como broker de eventos (Transactional Outbox), em modo KRaft
-  # (sem Zookeeper), nó único. Comunicacao local em PLAINTEXT, SEM credenciais —
-  # adequado apenas para desenvolvimento. Anunciado como localhost:9092 para a
-  # aplicacao rodando na maquina host (mvn spring-boot:run). Sem volume: em dev
-  # o broker pode reformatar o storage a cada subida.
+  # Kafka: broker de eventos (Transactional Outbox). Comunicacao local em
+  # PLAINTEXT, SEM credenciais — adequado apenas para desenvolvimento.
   kafka:
     image: apache/kafka:3.8.1
     container_name: pix-kafka
@@ -44,16 +74,118 @@ services:
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_LISTENERS: CONTROLLER://0.0.0.0:9093,INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
 
+  # MongoDB: auditoria/historico de notificacoes. Credenciais lidas do .env
+  # (NUNCA hardcodadas): falha cedo, com mensagem clara, se nao definidas.
+  mongodb:
+    image: mongo:7
+    container_name: pix-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: "${MONGO_ROOT_USERNAME:?defina MONGO_ROOT_USERNAME no arquivo .env}"
+      MONGO_INITDB_ROOT_PASSWORD: "${MONGO_ROOT_PASSWORD:?defina MONGO_ROOT_PASSWORD no arquivo .env}"
+      MONGO_INITDB_DATABASE: "${MONGO_DATABASE:-pix_notifications}"
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ------------------------------- Aplicacoes -------------------------------
+  # Profile "apps": sobem apenas com --profile apps. As imagens sao construidas
+  # a partir da RAIZ do monorepo (context: .), usando o Dockerfile de cada modulo.
+
+  pix-payment-api:
+    build:
+      context: .
+      dockerfile: pix-payment-api/Dockerfile
+    image: pix-payment-api:local
+    container_name: pix-payment-api
+    profiles: ["apps"]
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      # Dentro da rede do compose o host aponta para os servicos internos;
+      # credenciais e nome do banco vem do .env.
+      SQLSERVER_HOST: sqlserver
+      SQLSERVER_PORT: "1433"
+      SQLSERVER_DATABASE: "${SQLSERVER_DATABASE}"
+      SQLSERVER_USERNAME: "${SQLSERVER_USERNAME}"
+      SQLSERVER_PASSWORD: "${SQLSERVER_PASSWORD}"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      PIX_PAYMENT_EVENTS_TOPIC: "${PIX_PAYMENT_EVENTS_TOPIC:-pix.payment.events}"
+      PAYMENT_API_PORT: "8080"
+      OUTBOX_PUBLISHER_ENABLED: "${OUTBOX_PUBLISHER_ENABLED:-true}"
+      OUTBOX_PUBLISHER_FIXED_DELAY_MS: "${OUTBOX_PUBLISHER_FIXED_DELAY_MS:-5000}"
+      OUTBOX_PUBLISHER_BATCH_SIZE: "${OUTBOX_PUBLISHER_BATCH_SIZE:-20}"
+      OUTBOX_PUBLISHER_MAX_ATTEMPTS: "${OUTBOX_PUBLISHER_MAX_ATTEMPTS:-5}"
+    ports:
+      - "${PAYMENT_API_PORT:-8080}:8080"
+
+  pix-notification-worker:
+    build:
+      context: .
+      dockerfile: pix-notification-worker/Dockerfile
+    image: pix-notification-worker:local
+    container_name: pix-notification-worker
+    profiles: ["apps"]
+    depends_on:
+      kafka:
+        condition: service_started
+      mongodb:
+        condition: service_healthy
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      KAFKA_CONSUMER_GROUP_ID: "${KAFKA_CONSUMER_GROUP_ID:-pix-notification-worker}"
+      PIX_PAYMENT_EVENTS_TOPIC: "${PIX_PAYMENT_EVENTS_TOPIC:-pix.payment.events}"
+      # URI interna: usuario/senha do .env; host = servico mongodb na rede.
+      MONGO_URI: "mongodb://${MONGO_ROOT_USERNAME}:${MONGO_ROOT_PASSWORD}@mongodb:27017/${MONGO_DATABASE}?authSource=admin"
+      NOTIFICATION_WORKER_PORT: "8081"
+    ports:
+      - "${NOTIFICATION_WORKER_PORT:-8081}:8081"
+
+  # frontend-demo (Lote 10): vitrine em HTML/CSS/JS puro dos endpoints da API.
+  # O nginx serve os estaticos e faz proxy de /api e /actuator para a
+  # pix-payment-api — o navegador fala com a MESMA origem (sem CORS).
+  # API_BASE_URL vazio (default) usa esse proxy; defina-o so para apontar a uma
+  # API externa (que precisaria liberar CORS). Nao ha segredos nesta imagem.
+  frontend-demo:
+    build:
+      context: ./frontend-demo
+      dockerfile: Dockerfile
+    image: pix-frontend-demo:local
+    container_name: pix-frontend-demo
+    profiles: ["apps"]
+    depends_on:
+      pix-payment-api:
+        condition: service_started
+    environment:
+      API_BASE_URL: "${API_BASE_URL:-}"
+    ports:
+      - "${FRONTEND_PORT:-8088}:80"
+
 volumes:
-  pix-sqlserver-data:
+  sqlserver_data:
+  mongodb_data:

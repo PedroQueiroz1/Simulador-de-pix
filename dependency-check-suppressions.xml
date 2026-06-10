@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  OWASP Dependency Check — arquivo de supressoes (Lote 9).
+
+  Regra do projeto: NAO ignorar vulnerabilidade silenciosamente. Cada supressao
+  abaixo DEVE conter justificativa tecnica clara (por que e falso-positivo ou
+  por que o risco e aceitavel/nao exploravel neste contexto).
+
+  Uso:
+    mvn -Psecurity verify
+  O profile "security" referencia este arquivo automaticamente.
+
+  No momento NAO ha supressoes ativas: a primeira analise deve ser revisada
+  antes de suprimir qualquer CVE. Exemplo (comentado) do formato esperado:
+
+  <suppress>
+    <notes><![CDATA[
+      Falso-positivo: o CPE casa com outro produto. Confirmado em <data> por
+      <responsavel>. Dependencia <grupo:artefato:versao> nao e afetada.
+    ]]></notes>
+    <cve>CVE-0000-00000</cve>
+  </suppress>
+-->
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+</suppressions>
