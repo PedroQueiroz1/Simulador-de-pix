@@ -15,12 +15,18 @@ import java.time.Duration;
  *
  * <p>Regras de {@link #startOrReturn(String, String)}:
  * <ul>
- *   <li>sem registro: marca {@code PROCESSING} e devolve "nova operacao";</li>
+ *   <li>chave reivindicada atomicamente (nao existia): devolve "nova operacao";</li>
  *   <li>registro com hash diferente: {@link IdempotencyConflictException};</li>
  *   <li>registro {@code PROCESSING} com mesmo hash:
  *       {@link IdempotencyInProgressException};</li>
  *   <li>registro {@code COMPLETED} com mesmo hash: devolve a resposta armazenada.</li>
  * </ul>
+ *
+ * <p>A reivindicacao usa {@code tryStartProcessing} (SETNX), que e atomica:
+ * entre N requisicoes concorrentes com a mesma chave, exatamente uma segue como
+ * operacao nova — as demais leem o registro existente e caem nas regras acima.
+ * Antes (leitura seguida de escrita) duas requisicoes podiam ver "chave
+ * inexistente" ao mesmo tempo e ambas seguir para o INSERT no banco.
  *
  * <p>E uma classe pura (sem Spring): o TTL chega pronto por construtor, a partir
  * da configuracao, e e repassado ao repositorio em cada escrita.
@@ -42,14 +48,20 @@ public class IdempotencyService {
      * @throws IdempotencyInProgressException se a operacao original ainda esta em andamento
      */
     public IdempotencyStartResult startOrReturn(String idempotencyKey, String requestHash) {
-        return repository.findByKey(idempotencyKey)
-                .map(record -> handleExisting(idempotencyKey, requestHash, record))
-                .orElseGet(() -> startNew(idempotencyKey, requestHash));
-    }
-
-    private IdempotencyStartResult startNew(String idempotencyKey, String requestHash) {
-        repository.saveProcessing(idempotencyKey, requestHash, ttl);
-        return IdempotencyStartResult.newOperation();
+        // Duas tentativas cobrem o caso raro de a chave expirar (TTL) entre o
+        // claim que falhou e a leitura seguinte: na segunda volta o claim vence.
+        for (int attempt = 0; attempt < 2; attempt++) {
+            if (repository.tryStartProcessing(idempotencyKey, requestHash, ttl)) {
+                return IdempotencyStartResult.newOperation();
+            }
+            var existing = repository.findByKey(idempotencyKey);
+            if (existing.isPresent()) {
+                return handleExisting(idempotencyKey, requestHash, existing.get());
+            }
+        }
+        // Claim falhou duas vezes sem registro legivel: trata como em andamento
+        // (o cliente pode repetir a requisicao com seguranca).
+        throw new IdempotencyInProgressException(idempotencyKey);
     }
 
     private IdempotencyStartResult handleExisting(String idempotencyKey,

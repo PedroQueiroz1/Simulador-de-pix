@@ -43,7 +43,7 @@ public class RedisIdempotencyRepository implements IdempotencyRepository {
     }
 
     @Override
-    public void saveProcessing(String idempotencyKey, String requestHash, Duration ttl) {
+    public boolean tryStartProcessing(String idempotencyKey, String requestHash, Duration ttl) {
         RedisIdempotencyRecord record = new RedisIdempotencyRecord(
                 idempotencyKey,
                 requestHash,
@@ -52,7 +52,11 @@ public class RedisIdempotencyRepository implements IdempotencyRepository {
                 LocalDateTime.now().toString(),
                 null
         );
-        redisTemplate.opsForValue().set(redisKey(idempotencyKey), record, ttl);
+        // setIfAbsent = SETNX com TTL: operacao atomica no Redis. So uma entre N
+        // requisicoes concorrentes com a mesma chave recebe true; as demais leem
+        // o registro existente e seguem as regras do IdempotencyService.
+        Boolean claimed = redisTemplate.opsForValue().setIfAbsent(redisKey(idempotencyKey), record, ttl);
+        return Boolean.TRUE.equals(claimed);
     }
 
     @Override

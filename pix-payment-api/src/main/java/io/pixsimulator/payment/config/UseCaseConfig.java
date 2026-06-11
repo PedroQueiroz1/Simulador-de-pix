@@ -16,6 +16,7 @@ import io.pixsimulator.payment.application.port.out.OutboxRepository;
 import io.pixsimulator.payment.application.port.out.PixPaymentRepository;
 import io.pixsimulator.payment.application.usecase.CreateLedgerForApprovedPaymentService;
 import io.pixsimulator.payment.application.usecase.CreatePixPaymentService;
+import io.pixsimulator.payment.application.usecase.CreatePixPaymentWriter;
 import io.pixsimulator.payment.application.usecase.GetLedgerByPaymentService;
 import io.pixsimulator.payment.application.usecase.GetPixPaymentService;
 import io.pixsimulator.payment.application.usecase.ProcessPixPaymentService;
@@ -67,14 +68,25 @@ public class UseCaseConfig {
                 outboxRepository, idGenerator, objectMapper, kafkaTopicsProperties.getPaymentEvents());
     }
 
+    /**
+     * Passo transacional da criacao (INSERT + Outbox). Bean separado para que o
+     * proxy de {@code @Transactional} envolva exatamente esta fronteira — o
+     * orquestrador captura a corrida da constraint unica FORA da transacao.
+     */
     @Bean
-    public CreatePixPaymentUseCase createPixPaymentUseCase(PixPaymentRepository repository,
-                                                           IdGenerator idGenerator,
+    public CreatePixPaymentWriter createPixPaymentWriter(PixPaymentRepository repository,
+                                                         IdGenerator idGenerator,
+                                                         PaymentOutboxEventService paymentOutboxEventService) {
+        return new CreatePixPaymentWriter(repository, idGenerator, paymentOutboxEventService);
+    }
+
+    @Bean
+    public CreatePixPaymentUseCase createPixPaymentUseCase(CreatePixPaymentWriter createPixPaymentWriter,
+                                                           PixPaymentRepository repository,
                                                            RequestFingerprintGenerator fingerprintGenerator,
-                                                           IdempotencyService idempotencyService,
-                                                           PaymentOutboxEventService paymentOutboxEventService) {
+                                                           IdempotencyService idempotencyService) {
         return new CreatePixPaymentService(
-                repository, idGenerator, fingerprintGenerator, idempotencyService, paymentOutboxEventService);
+                createPixPaymentWriter, repository, fingerprintGenerator, idempotencyService);
     }
 
     @Bean

@@ -2,16 +2,14 @@ package io.pixsimulator.payment.application.usecase;
 
 import io.pixsimulator.payment.application.dto.CreatePixPaymentCommand;
 import io.pixsimulator.payment.application.dto.CreatePixPaymentResult;
+import io.pixsimulator.payment.application.exception.DuplicateIdempotencyKeyException;
 import io.pixsimulator.payment.application.exception.IdempotencyConflictException;
 import io.pixsimulator.payment.application.exception.IdempotencyInProgressException;
 import io.pixsimulator.payment.application.idempotency.IdempotencyResponseData;
 import io.pixsimulator.payment.application.idempotency.IdempotencyService;
 import io.pixsimulator.payment.application.idempotency.IdempotencyStartResult;
 import io.pixsimulator.payment.application.idempotency.RequestFingerprintGenerator;
-import io.pixsimulator.payment.application.outbox.PaymentOutboxEventService;
-import io.pixsimulator.payment.application.port.out.IdGenerator;
 import io.pixsimulator.payment.application.port.out.PixPaymentRepository;
-import io.pixsimulator.payment.domain.exception.DomainException;
 import io.pixsimulator.payment.domain.model.PixPayment;
 import io.pixsimulator.payment.domain.model.PixPaymentStatus;
 import org.junit.jupiter.api.DisplayName;
@@ -22,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -34,13 +33,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Testes do caso de uso de criacao de pagamento ja na versao Lote 3, com
- * idempotencia delegada ao {@link IdempotencyService}.
+ * Testes do orquestrador de criacao de pagamento.
  *
- * <p>Usa um {@link RequestFingerprintGenerator} real (deterministico) e mocks de
- * {@link PixPaymentRepository} e {@link IdempotencyService}, para exercitar os
- * caminhos: primeira requisicao, retry equivalente, conflito de payload e
- * operacao em processamento.
+ * <p>Usa um {@link RequestFingerprintGenerator} real (deterministico) e mocks do
+ * {@link CreatePixPaymentWriter} (passo transacional), do
+ * {@link PixPaymentRepository} (recuperacao) e do {@link IdempotencyService},
+ * para exercitar os caminhos: primeira requisicao, retry equivalente, conflito
+ * de payload, operacao em processamento e a recuperacao da corrida barrada pela
+ * constraint unica do banco (ultima barreira).
  */
 @ExtendWith(MockitoExtension.class)
 class CreatePixPaymentServiceTest {
@@ -49,22 +49,18 @@ class CreatePixPaymentServiceTest {
     private static final String IDEMPOTENCY_KEY = "7f9d0f7a-4b2a-4d2f-9e3b-8375b4fdc321";
 
     @Mock
+    private CreatePixPaymentWriter writer;
+
+    @Mock
     private PixPaymentRepository repository;
 
     @Mock
     private IdempotencyService idempotencyService;
 
-    @Mock
-    private PaymentOutboxEventService paymentOutboxEventService;
-
     private final RequestFingerprintGenerator fingerprintGenerator = new RequestFingerprintGenerator();
 
-    /** Gerador de ID deterministico para testes (substitui o UUIDv7 real). */
-    private final IdGenerator idGenerator = () -> FIXED_ID;
-
     private CreatePixPaymentService service() {
-        return new CreatePixPaymentService(
-                repository, idGenerator, fingerprintGenerator, idempotencyService, paymentOutboxEventService);
+        return new CreatePixPaymentService(writer, repository, fingerprintGenerator, idempotencyService);
     }
 
     private CreatePixPaymentCommand validCommand() {
@@ -74,6 +70,17 @@ class CreatePixPaymentServiceTest {
                 new BigDecimal("150.75"),
                 "Pagamento de teste",
                 IDEMPOTENCY_KEY
+        );
+    }
+
+    private CreatePixPaymentResult writtenResult() {
+        return new CreatePixPaymentResult(
+                FIXED_ID,
+                PixPaymentStatus.CREATED,
+                "11111111111",
+                "22222222222",
+                new BigDecimal("150.75"),
+                "Pagamento de teste"
         );
     }
 
@@ -88,27 +95,34 @@ class CreatePixPaymentServiceTest {
         );
     }
 
+    /** Pagamento ja persistido pelo "vencedor" da corrida, com o mesmo payload. */
+    private PixPayment existingPayment() {
+        return PixPayment.create(
+                FIXED_ID,
+                "11111111111",
+                "22222222222",
+                new BigDecimal("150.75"),
+                "Pagamento de teste",
+                IDEMPOTENCY_KEY
+        );
+    }
+
     @Test
-    @DisplayName("Primeira criacao deve salvar Payment e OutboxEvent PAYMENT_CREATED")
-    void firstRequestCreatesPayment() {
+    @DisplayName("Primeira criacao deve delegar ao writer transacional e devolver o resultado")
+    void firstRequestDelegatesToWriter() {
         when(idempotencyService.startOrReturn(eq(IDEMPOTENCY_KEY), anyString()))
                 .thenReturn(IdempotencyStartResult.newOperation());
-        when(repository.save(any(PixPayment.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(writer.createNew(any(CreatePixPaymentCommand.class))).thenReturn(writtenResult());
 
         CreatePixPaymentResult result = service().create(validCommand());
 
         assertEquals(FIXED_ID, result.paymentId());
         assertEquals(PixPaymentStatus.CREATED, result.status());
 
-        ArgumentCaptor<PixPayment> captor = ArgumentCaptor.forClass(PixPayment.class);
-        verify(repository).save(captor.capture());
-        assertEquals(FIXED_ID, captor.getValue().getId());
-        assertEquals(IDEMPOTENCY_KEY, captor.getValue().getIdempotencyKey());
-
-        // Lote 6: o evento PAYMENT_CREATED e gravado na mesma transacao.
-        ArgumentCaptor<PixPayment> outboxCaptor = ArgumentCaptor.forClass(PixPayment.class);
-        verify(paymentOutboxEventService).recordPaymentCreated(outboxCaptor.capture());
-        assertEquals(FIXED_ID, outboxCaptor.getValue().getId());
+        ArgumentCaptor<CreatePixPaymentCommand> captor =
+                ArgumentCaptor.forClass(CreatePixPaymentCommand.class);
+        verify(writer).createNew(captor.capture());
+        assertEquals(IDEMPOTENCY_KEY, captor.getValue().idempotencyKey());
     }
 
     @Test
@@ -116,7 +130,7 @@ class CreatePixPaymentServiceTest {
     void firstRequestCompletesIdempotency() {
         when(idempotencyService.startOrReturn(eq(IDEMPOTENCY_KEY), anyString()))
                 .thenReturn(IdempotencyStartResult.newOperation());
-        when(repository.save(any(PixPayment.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(writer.createNew(any(CreatePixPaymentCommand.class))).thenReturn(writtenResult());
 
         service().create(validCommand());
 
@@ -143,17 +157,15 @@ class CreatePixPaymentServiceTest {
     }
 
     @Test
-    @DisplayName("Retry idempotente equivalente nao deve salvar novo OutboxEvent")
-    void retrySamePayloadDoesNotSaveAgain() {
+    @DisplayName("Retry idempotente equivalente nao deve criar nada de novo")
+    void retrySamePayloadDoesNotCreateAgain() {
         when(idempotencyService.startOrReturn(eq(IDEMPOTENCY_KEY), anyString()))
                 .thenReturn(IdempotencyStartResult.completed(storedResponse()));
 
         service().create(validCommand());
 
-        verify(repository, never()).save(any(PixPayment.class));
+        verify(writer, never()).createNew(any(CreatePixPaymentCommand.class));
         verify(idempotencyService, never()).complete(anyString(), anyString(), any());
-        // Lote 6: retry equivalente nao recria evento de Outbox.
-        verify(paymentOutboxEventService, never()).recordPaymentCreated(any());
     }
 
     @Test
@@ -165,7 +177,7 @@ class CreatePixPaymentServiceTest {
         CreatePixPaymentService service = service();
         CreatePixPaymentCommand command = validCommand();
         assertThrows(IdempotencyConflictException.class, () -> service.create(command));
-        verify(repository, never()).save(any(PixPayment.class));
+        verify(writer, never()).createNew(any(CreatePixPaymentCommand.class));
     }
 
     @Test
@@ -177,25 +189,80 @@ class CreatePixPaymentServiceTest {
         CreatePixPaymentService service = service();
         CreatePixPaymentCommand command = validCommand();
         assertThrows(IdempotencyInProgressException.class, () -> service.create(command));
-        verify(repository, never()).save(any(PixPayment.class));
+        verify(writer, never()).createNew(any(CreatePixPaymentCommand.class));
+    }
+
+    // ----------------------------------------------------------------------
+    // Recuperacao da corrida barrada pela constraint unica (ultima barreira)
+    // ----------------------------------------------------------------------
+
+    @Test
+    @DisplayName("Constraint unica disparada com payload equivalente deve devolver o pagamento vencedor")
+    void dbBarrierWithEquivalentPayloadRecoversWinner() {
+        when(idempotencyService.startOrReturn(eq(IDEMPOTENCY_KEY), anyString()))
+                .thenReturn(IdempotencyStartResult.newOperation());
+        when(writer.createNew(any(CreatePixPaymentCommand.class)))
+                .thenThrow(new DuplicateIdempotencyKeyException(IDEMPOTENCY_KEY, new RuntimeException("dup")));
+        when(repository.findByIdempotencyKey(IDEMPOTENCY_KEY)).thenReturn(Optional.of(existingPayment()));
+
+        CreatePixPaymentResult result = service().create(validCommand());
+
+        // Mesma semantica do retry equivalente: resposta do vencedor, sem erro.
+        assertEquals(FIXED_ID, result.paymentId());
+        assertEquals(PixPaymentStatus.CREATED, result.status());
+        assertEquals("11111111111", result.payerKey());
+        assertEquals(new BigDecimal("150.75"), result.amount());
     }
 
     @Test
-    @DisplayName("Deve propagar DomainException para regra violada (payer == receiver)")
-    void propagatesDomainException() {
-        when(idempotencyService.startOrReturn(anyString(), anyString()))
+    @DisplayName("Recuperacao deve completar a idempotencia com a resposta do vencedor")
+    void dbBarrierRecoveryCompletesIdempotency() {
+        when(idempotencyService.startOrReturn(eq(IDEMPOTENCY_KEY), anyString()))
                 .thenReturn(IdempotencyStartResult.newOperation());
+        when(writer.createNew(any(CreatePixPaymentCommand.class)))
+                .thenThrow(new DuplicateIdempotencyKeyException(IDEMPOTENCY_KEY, new RuntimeException("dup")));
+        when(repository.findByIdempotencyKey(IDEMPOTENCY_KEY)).thenReturn(Optional.of(existingPayment()));
+
+        service().create(validCommand());
+
+        // Cura a chave no Redis: futuros retries equivalentes nem chegam ao banco.
+        ArgumentCaptor<IdempotencyResponseData> captor = ArgumentCaptor.forClass(IdempotencyResponseData.class);
+        verify(idempotencyService).complete(eq(IDEMPOTENCY_KEY), anyString(), captor.capture());
+        assertEquals(FIXED_ID, captor.getValue().paymentId());
+    }
+
+    @Test
+    @DisplayName("Constraint unica disparada com payload divergente deve lancar IdempotencyConflictException")
+    void dbBarrierWithDifferentPayloadThrowsConflict() {
+        when(idempotencyService.startOrReturn(eq(IDEMPOTENCY_KEY), anyString()))
+                .thenReturn(IdempotencyStartResult.newOperation());
+        when(writer.createNew(any(CreatePixPaymentCommand.class)))
+                .thenThrow(new DuplicateIdempotencyKeyException(IDEMPOTENCY_KEY, new RuntimeException("dup")));
+        // Vencedor persistiu OUTRO valor para a mesma chave: reuso indevido.
+        PixPayment divergent = PixPayment.create(
+                FIXED_ID, "11111111111", "22222222222",
+                new BigDecimal("999.99"), "Pagamento de teste", IDEMPOTENCY_KEY);
+        when(repository.findByIdempotencyKey(IDEMPOTENCY_KEY)).thenReturn(Optional.of(divergent));
 
         CreatePixPaymentService service = service();
-        CreatePixPaymentCommand invalid = new CreatePixPaymentCommand(
-                "11111111111",
-                "11111111111", // payer == receiver: viola regra de dominio
-                new BigDecimal("150.75"),
-                "Pagamento invalido",
-                IDEMPOTENCY_KEY
-        );
+        CreatePixPaymentCommand command = validCommand();
+        assertThrows(IdempotencyConflictException.class, () -> service.create(command));
+        verify(idempotencyService, never()).complete(anyString(), anyString(), any());
+    }
 
-        assertThrows(DomainException.class, () -> service.create(invalid));
-        verify(repository, never()).save(any(PixPayment.class));
+    @Test
+    @DisplayName("Constraint unica disparada com vencedor revertido deve lancar IdempotencyInProgressException")
+    void dbBarrierWithRolledBackWinnerThrowsInProgress() {
+        when(idempotencyService.startOrReturn(eq(IDEMPOTENCY_KEY), anyString()))
+                .thenReturn(IdempotencyStartResult.newOperation());
+        when(writer.createNew(any(CreatePixPaymentCommand.class)))
+                .thenThrow(new DuplicateIdempotencyKeyException(IDEMPOTENCY_KEY, new RuntimeException("dup")));
+        // Caso raro: quem nos barrou sofreu rollback; nao ha registro para devolver.
+        when(repository.findByIdempotencyKey(IDEMPOTENCY_KEY)).thenReturn(Optional.empty());
+
+        CreatePixPaymentService service = service();
+        CreatePixPaymentCommand command = validCommand();
+        assertThrows(IdempotencyInProgressException.class, () -> service.create(command));
+        verify(idempotencyService, never()).complete(anyString(), anyString(), any());
     }
 }

@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -58,20 +59,21 @@ class IdempotencyServiceTest {
     }
 
     @Test
-    @DisplayName("Chave inexistente deve marcar como PROCESSING e devolver nova operacao")
-    void unknownKeyMarksProcessing() {
-        when(repository.findByKey(KEY)).thenReturn(Optional.empty());
+    @DisplayName("Chave inexistente deve ser reivindicada atomicamente e devolver nova operacao")
+    void unknownKeyClaimsProcessing() {
+        when(repository.tryStartProcessing(KEY, HASH, TTL)).thenReturn(true);
 
         IdempotencyStartResult result = service().startOrReturn(KEY, HASH);
 
         assertFalse(result.isCompleted());
-        verify(repository).saveProcessing(KEY, HASH, TTL);
+        verify(repository).tryStartProcessing(KEY, HASH, TTL);
     }
 
     @Test
-    @DisplayName("COMPLETED com mesmo hash deve devolver a resposta armazenada")
+    @DisplayName("Claim perdido + COMPLETED com mesmo hash deve devolver a resposta armazenada")
     void completedSameHashReturnsStoredResponse() {
         IdempotencyResponseData stored = responseData();
+        when(repository.tryStartProcessing(KEY, HASH, TTL)).thenReturn(false);
         when(repository.findByKey(KEY)).thenReturn(Optional.of(completed(HASH, stored)));
 
         IdempotencyStartResult result = service().startOrReturn(KEY, HASH);
@@ -81,8 +83,9 @@ class IdempotencyServiceTest {
     }
 
     @Test
-    @DisplayName("COMPLETED com hash diferente deve lancar IdempotencyConflictException")
+    @DisplayName("Claim perdido + COMPLETED com hash diferente deve lancar IdempotencyConflictException")
     void completedDifferentHashThrowsConflict() {
+        when(repository.tryStartProcessing(KEY, HASH, TTL)).thenReturn(false);
         when(repository.findByKey(KEY)).thenReturn(Optional.of(completed("outro-hash", responseData())));
 
         IdempotencyService service = service();
@@ -90,8 +93,9 @@ class IdempotencyServiceTest {
     }
 
     @Test
-    @DisplayName("PROCESSING com mesmo hash deve lancar IdempotencyInProgressException")
+    @DisplayName("Claim perdido + PROCESSING com mesmo hash deve lancar IdempotencyInProgressException")
     void processingSameHashThrowsInProgress() {
+        when(repository.tryStartProcessing(KEY, HASH, TTL)).thenReturn(false);
         when(repository.findByKey(KEY)).thenReturn(Optional.of(processing(HASH)));
 
         IdempotencyService service = service();
@@ -99,12 +103,38 @@ class IdempotencyServiceTest {
     }
 
     @Test
-    @DisplayName("PROCESSING com hash diferente deve lancar IdempotencyConflictException")
+    @DisplayName("Claim perdido + PROCESSING com hash diferente deve lancar IdempotencyConflictException")
     void processingDifferentHashThrowsConflict() {
+        when(repository.tryStartProcessing(KEY, HASH, TTL)).thenReturn(false);
         when(repository.findByKey(KEY)).thenReturn(Optional.of(processing("outro-hash")));
 
         IdempotencyService service = service();
         assertThrows(IdempotencyConflictException.class, () -> service.startOrReturn(KEY, HASH));
+    }
+
+    @Test
+    @DisplayName("Chave expirada entre o claim e a leitura: segunda tentativa de claim deve vencer")
+    void expiredBetweenClaimAndReadRetriesClaim() {
+        // 1a volta: claim falha e a leitura nao encontra nada (TTL expirou no meio);
+        // 2a volta: o claim vence e a operacao segue como nova.
+        when(repository.tryStartProcessing(KEY, HASH, TTL)).thenReturn(false, true);
+        when(repository.findByKey(KEY)).thenReturn(Optional.empty());
+
+        IdempotencyStartResult result = service().startOrReturn(KEY, HASH);
+
+        assertFalse(result.isCompleted());
+        verify(repository, times(2)).tryStartProcessing(KEY, HASH, TTL);
+    }
+
+    @Test
+    @DisplayName("Claim falhando duas vezes sem registro legivel deve lancar IdempotencyInProgressException")
+    void unreachableRecordAfterTwoAttemptsThrowsInProgress() {
+        when(repository.tryStartProcessing(KEY, HASH, TTL)).thenReturn(false);
+        when(repository.findByKey(KEY)).thenReturn(Optional.empty());
+
+        IdempotencyService service = service();
+        assertThrows(IdempotencyInProgressException.class, () -> service.startOrReturn(KEY, HASH));
+        verify(repository, times(2)).tryStartProcessing(KEY, HASH, TTL);
     }
 
     @Test
@@ -118,14 +148,14 @@ class IdempotencyServiceTest {
     }
 
     @Test
-    @DisplayName("Deve usar o TTL configurado ao salvar")
+    @DisplayName("Deve usar o TTL configurado ao reivindicar a chave")
     void usesConfiguredTtl() {
         Duration customTtl = Duration.ofSeconds(3600);
         IdempotencyService service = new IdempotencyService(repository, customTtl);
-        when(repository.findByKey(KEY)).thenReturn(Optional.empty());
+        when(repository.tryStartProcessing(KEY, HASH, customTtl)).thenReturn(true);
 
         service.startOrReturn(KEY, HASH);
 
-        verify(repository).saveProcessing(eq(KEY), eq(HASH), eq(customTtl));
+        verify(repository).tryStartProcessing(eq(KEY), eq(HASH), eq(customTtl));
     }
 }

@@ -1,6 +1,5 @@
 package io.pixsimulator.payment.adapter.in.web;
 
-import io.pixsimulator.payment.application.exception.DuplicateIdempotencyKeyException;
 import io.pixsimulator.payment.application.exception.IdempotencyConflictException;
 import io.pixsimulator.payment.application.exception.IdempotencyInProgressException;
 import io.pixsimulator.payment.application.exception.PaymentNotFoundException;
@@ -101,19 +100,6 @@ public class RestExceptionHandler {
                                                                      HttpServletRequest request) {
         return build(HttpStatus.CONFLICT, "Payment cannot be processed",
                 List.of("Payment is already in a terminal status"), request);
-    }
-
-    /**
-     * Reuso de {@code Idempotency-Key} (Lote 2) -&gt; HTTP 409 Conflict.
-     *
-     * <p>O corpo nao expoe a mensagem interna da excecao: usa um texto fixo,
-     * coerente com a limitacao atual (ainda nao ha comparacao de payload).
-     */
-    @ExceptionHandler(DuplicateIdempotencyKeyException.class)
-    public ResponseEntity<ErrorResponse> handleDuplicateIdempotencyKey(DuplicateIdempotencyKeyException ex,
-                                                                       HttpServletRequest request) {
-        return build(HttpStatus.CONFLICT, "Idempotency key already used",
-                List.of("A payment already exists for this Idempotency-Key"), request);
     }
 
     /**

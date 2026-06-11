@@ -1,5 +1,6 @@
 package io.pixsimulator.payment.adapter.out.persistence.jpa;
 
+import io.pixsimulator.payment.application.exception.DuplicateIdempotencyKeyException;
 import io.pixsimulator.payment.application.port.out.IdGenerator;
 import io.pixsimulator.payment.domain.model.PixPayment;
 import io.pixsimulator.payment.domain.model.PixPaymentStatus;
@@ -7,7 +8,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -134,15 +134,18 @@ class JpaPixPaymentRepositoryAdapterIntegrationTest {
     }
 
     @Test
-    @DisplayName("O banco deve impedir duplicidade de idempotencyKey (constraint unica)")
+    @DisplayName("O banco deve impedir duplicidade de idempotencyKey, traduzida pelo adapter")
     void shouldRejectDuplicateIdempotencyKey() {
         String key = "key-dup-" + UUID.randomUUID();
         adapter.save(newPayment(key));
 
-        // Mesmo idempotencyKey, id diferente: a constraint UK deve barrar.
+        // Mesmo idempotencyKey, id diferente: a constraint UK barra o INSERT e o
+        // adapter traduz a violacao em DuplicateIdempotencyKeyException, que o
+        // caso de uso usa para recuperar o pagamento vencedor (resposta 201/409,
+        // nunca 500).
         PixPayment duplicate = newPayment(key);
 
-        assertThrows(DataIntegrityViolationException.class, () -> adapter.save(duplicate));
+        assertThrows(DuplicateIdempotencyKeyException.class, () -> adapter.save(duplicate));
     }
 
     @Test

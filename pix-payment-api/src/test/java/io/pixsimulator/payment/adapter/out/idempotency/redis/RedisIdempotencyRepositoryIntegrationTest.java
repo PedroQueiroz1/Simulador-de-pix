@@ -20,6 +20,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -78,17 +79,48 @@ class RedisIdempotencyRepositoryIntegrationTest {
     }
 
     @Test
-    @DisplayName("Deve salvar e recuperar um registro PROCESSING")
-    void savesAndRetrievesProcessing() {
+    @DisplayName("Deve reivindicar e recuperar um registro PROCESSING")
+    void claimsAndRetrievesProcessing() {
         String key = uniqueKey("processing");
 
-        repository.saveProcessing(key, "hash-1", TTL);
+        boolean claimed = repository.tryStartProcessing(key, "hash-1", TTL);
 
+        assertTrue(claimed, "a primeira reivindicacao da chave deve vencer");
         Optional<IdempotencyRecord> found = repository.findByKey(key);
         assertTrue(found.isPresent());
         assertEquals(IdempotencyStatus.PROCESSING, found.get().status());
         assertEquals("hash-1", found.get().requestHash());
         assertNull(found.get().response());
+    }
+
+    @Test
+    @DisplayName("Segunda reivindicacao da mesma chave deve falhar sem sobrescrever o registro")
+    void secondClaimFailsAndPreservesRecord() {
+        String key = uniqueKey("claim-race");
+
+        boolean first = repository.tryStartProcessing(key, "hash-vencedor", TTL);
+        boolean second = repository.tryStartProcessing(key, "hash-perdedor", TTL);
+
+        assertTrue(first);
+        assertFalse(second, "SETNX: a segunda reivindicacao nao pode vencer");
+        // O registro continua sendo o do vencedor (nao foi sobrescrito).
+        IdempotencyRecord record = repository.findByKey(key).orElseThrow();
+        assertEquals("hash-vencedor", record.requestHash());
+        assertEquals(IdempotencyStatus.PROCESSING, record.status());
+    }
+
+    @Test
+    @DisplayName("Reivindicacao sobre chave COMPLETED deve falhar e preservar a resposta")
+    void claimOverCompletedFailsAndPreservesResponse() {
+        String key = uniqueKey("claim-completed");
+        repository.saveCompleted(key, "hash-4", responseData(), TTL);
+
+        boolean claimed = repository.tryStartProcessing(key, "hash-4", TTL);
+
+        assertFalse(claimed);
+        IdempotencyRecord record = repository.findByKey(key).orElseThrow();
+        assertEquals(IdempotencyStatus.COMPLETED, record.status());
+        assertNotNull(record.response());
     }
 
     @Test
@@ -119,7 +151,7 @@ class RedisIdempotencyRepositoryIntegrationTest {
     void respectsTtl() {
         String key = uniqueKey("ttl");
 
-        repository.saveProcessing(key, "hash-3", TTL);
+        repository.tryStartProcessing(key, "hash-3", TTL);
 
         Long expire = redisTemplate.getExpire(RedisIdempotencyRepository.KEY_PREFIX + key);
         assertNotNull(expire);
