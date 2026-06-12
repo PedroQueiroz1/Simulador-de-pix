@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 /**
- * Testes do caso de uso de consulta de pagamento por id (Lote 4).
+ * Testes do caso de uso de consulta de pagamento por id.
  */
 @ExtendWith(MockitoExtension.class)
 class GetPixPaymentServiceTest {

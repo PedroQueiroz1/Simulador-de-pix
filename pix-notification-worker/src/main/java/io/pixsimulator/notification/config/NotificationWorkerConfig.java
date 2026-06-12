@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Wiring do nucleo do worker (Lote 7).
+ * Wiring do nucleo do worker.
  *
  * <p>O {@link NotificationSimulator} e o {@link PaymentEventHandler} sao classes
  * sem Spring (testaveis com {@code new}); e aqui, na borda de configuracao, que

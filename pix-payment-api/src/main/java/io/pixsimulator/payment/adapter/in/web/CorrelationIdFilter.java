@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 /**
- * Filtro de rastreabilidade (Lote 8).
+ * Filtro de rastreabilidade.
  *
  * <p>Responsabilidades, por requisicao:
  * <ol>

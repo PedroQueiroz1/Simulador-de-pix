@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * Corpo da resposta do processamento simulado de pagamento (Lote 4).
+ * Corpo da resposta do processamento simulado de pagamento.
  *
  * Expoe apenas o desfecho: status final, {@code processedAt} e, em caso de
  * rejeicao, o {@code rejectionReason}.

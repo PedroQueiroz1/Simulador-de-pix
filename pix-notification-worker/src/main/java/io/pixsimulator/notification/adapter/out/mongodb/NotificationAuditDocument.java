@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * Documento de persistencia da auditoria no MongoDB (Lote 7), separado do
+ * Documento de persistencia da auditoria no MongoDB, separado do
  * dominio {@code NotificationAudit}.
  *
  * <p>Mapeia a collection {@code notification_audits}. O {@code eventId} tem

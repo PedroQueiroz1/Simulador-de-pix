@@ -32,8 +32,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Testes do caso de uso de processamento simulado de pagamento (Lote 4),
- * agora cobrindo a integracao com o Ledger (Lote 5).
+ * Testes do caso de uso de processamento simulado de pagamento,
+ * cobrindo a integracao com o Ledger.
  *
  * <p>A regra e deterministica: {@code amount <= 5000.00} aprova; acima rejeita.
  * Aprovado gera Ledger; rejeitado/terminal nao gera.
@@ -168,11 +168,11 @@ class ProcessPixPaymentServiceTest {
     }
 
     // ----------------------------------------------------------------------
-    // Lote 5: integracao com o Ledger
+    // Integracao com o Ledger
     // ----------------------------------------------------------------------
 
     @Test
-    @DisplayName("Lote 5: ao aprovar pagamento, deve criar Ledger")
+    @DisplayName("Ao aprovar pagamento, deve criar Ledger")
     void shouldCreateLedgerWhenApproved() {
         when(repository.findById(PAYMENT_ID))
                 .thenReturn(Optional.of(paymentWith(new BigDecimal("150.75"), PixPaymentStatus.CREATED)));
@@ -187,7 +187,7 @@ class ProcessPixPaymentServiceTest {
     }
 
     @Test
-    @DisplayName("Lote 5: ao rejeitar pagamento, nao deve criar Ledger")
+    @DisplayName("Ao rejeitar pagamento, nao deve criar Ledger")
     void shouldNotCreateLedgerWhenRejected() {
         when(repository.findById(PAYMENT_ID))
                 .thenReturn(Optional.of(paymentWith(new BigDecimal("9000.00"), PixPaymentStatus.CREATED)));
@@ -199,7 +199,7 @@ class ProcessPixPaymentServiceTest {
     }
 
     @Test
-    @DisplayName("Lote 5: ao tentar processar pagamento terminal, nao deve criar Ledger")
+    @DisplayName("Ao tentar processar pagamento terminal, nao deve criar Ledger")
     void shouldNotCreateLedgerWhenTerminal() {
         when(repository.findById(PAYMENT_ID))
                 .thenReturn(Optional.of(paymentWith(new BigDecimal("100.00"), PixPaymentStatus.APPROVED)));
@@ -210,11 +210,11 @@ class ProcessPixPaymentServiceTest {
     }
 
     // ----------------------------------------------------------------------
-    // Lote 6: integracao com a Outbox
+    // Integracao com a Outbox
     // ----------------------------------------------------------------------
 
     @Test
-    @DisplayName("Lote 6: pagamento aprovado deve salvar Payment, Ledger e OutboxEvent PAYMENT_APPROVED")
+    @DisplayName("Pagamento aprovado deve salvar Payment, Ledger e OutboxEvent PAYMENT_APPROVED")
     void shouldSavePaymentLedgerAndApprovedEventWhenApproved() {
         when(repository.findById(PAYMENT_ID))
                 .thenReturn(Optional.of(paymentWith(new BigDecimal("150.75"), PixPaymentStatus.CREATED)));
@@ -234,7 +234,7 @@ class ProcessPixPaymentServiceTest {
     }
 
     @Test
-    @DisplayName("Lote 6: pagamento rejeitado deve salvar Payment e OutboxEvent PAYMENT_REJECTED")
+    @DisplayName("Pagamento rejeitado deve salvar Payment e OutboxEvent PAYMENT_REJECTED")
     void shouldSavePaymentAndRejectedEventWhenRejected() {
         when(repository.findById(PAYMENT_ID))
                 .thenReturn(Optional.of(paymentWith(new BigDecimal("9000.00"), PixPaymentStatus.CREATED)));
@@ -249,7 +249,7 @@ class ProcessPixPaymentServiceTest {
     }
 
     @Test
-    @DisplayName("Lote 6: pagamento rejeitado nao deve criar Ledger nem evento PAYMENT_APPROVED")
+    @DisplayName("Pagamento rejeitado nao deve criar Ledger nem evento PAYMENT_APPROVED")
     void shouldNotCreateLedgerNorApprovedEventWhenRejected() {
         when(repository.findById(PAYMENT_ID))
                 .thenReturn(Optional.of(paymentWith(new BigDecimal("9000.00"), PixPaymentStatus.CREATED)));
@@ -262,7 +262,7 @@ class ProcessPixPaymentServiceTest {
     }
 
     @Test
-    @DisplayName("Lote 6: pagamento terminal nao deve criar novo OutboxEvent")
+    @DisplayName("Pagamento terminal nao deve criar novo OutboxEvent")
     void shouldNotCreateOutboxEventWhenTerminal() {
         when(repository.findById(PAYMENT_ID))
                 .thenReturn(Optional.of(paymentWith(new BigDecimal("100.00"), PixPaymentStatus.APPROVED)));

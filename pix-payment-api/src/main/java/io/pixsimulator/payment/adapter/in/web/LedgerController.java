@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 /**
- * Adapter de entrada HTTP para consulta do Ledger (Lote 5).
+ * Adapter de entrada HTTP para consulta do Ledger.
  *
  * <p>Endpoint:
  * <ul>

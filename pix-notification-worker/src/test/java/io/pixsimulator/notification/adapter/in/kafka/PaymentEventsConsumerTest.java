@@ -12,7 +12,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 /**
  * Testes do {@link PaymentEventsConsumer} com {@link PaymentEventHandler}
- * mockado (Lote 7).
+ * mockado.
  *
  * <p>O consumer e um adapter fino: so delega para o handler. Os testes garantem
  * exatamente isso — a mensagem e repassada intacta e o consumer nao executa

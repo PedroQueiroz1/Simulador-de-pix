@@ -5,14 +5,14 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * Payload explicito do evento {@code PAYMENT_CREATED} (Lote 6).
+ * Payload explicito do evento {@code PAYMENT_CREATED}.
  *
  * <p>Contrato estavel publicado no Kafka (ADR-028): nao serializamos a entidade
  * de dominio nem a Entity JPA diretamente. {@code eventId} e sempre igual ao
  * {@code id} do {@code OutboxEvent}, permitindo idempotencia por evento no
- * consumidor (Lote 7).
+ * consumidor.
  *
- * <p>Lote 8: carrega o {@code correlationId} (lido do MDC pelo
+ * <p>Carrega o {@code correlationId} (lido do MDC pelo
  * {@code PaymentOutboxEventService}), propagando a rastreabilidade da requisicao
  * HTTP para o worker que consome o evento.
  */

@@ -29,10 +29,10 @@ import java.util.UUID;
  *
  * <p>Endpoints:
  * <ul>
- *   <li>{@code POST /api/v1/pix/payments} — cria um pagamento (Lotes 1-3);</li>
- *   <li>{@code GET /api/v1/pix/payments/{paymentId}} — consulta por id (Lote 4);</li>
+ *   <li>{@code POST /api/v1/pix/payments} — cria um pagamento;</li>
+ *   <li>{@code GET /api/v1/pix/payments/{paymentId}} — consulta por id;</li>
  *   <li>{@code POST /api/v1/pix/payments/{paymentId}/process} — processamento
- *       simulado (Lote 4).</li>
+ *       simulado.</li>
  * </ul>
  */
 @RestController
@@ -79,7 +79,7 @@ public class PixPaymentController {
     }
 
     /**
-     * Consulta um pagamento pelo seu id (Lote 4).
+     * Consulta um pagamento pelo seu id.
      *
      * <p>O Spring converte automaticamente o path variable para {@link UUID}; um
      * valor invalido resulta em HTTP 400 (tratado no {@code RestExceptionHandler}).
@@ -106,9 +106,9 @@ public class PixPaymentController {
     }
 
     /**
-     * Processa (simuladamente) um pagamento pelo seu id (Lote 4).
+     * Processa (simuladamente) um pagamento pelo seu id.
      *
-     * <p>O body e opcional e ignorado neste lote. Pagamento inexistente resulta
+     * <p>O body e opcional e ignorado. Pagamento inexistente resulta
      * em HTTP 404; pagamento ja em status terminal resulta em HTTP 409.
      */
     @PostMapping("/{paymentId}/process")

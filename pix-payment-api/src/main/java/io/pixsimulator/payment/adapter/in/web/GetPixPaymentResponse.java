@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * Corpo da resposta da consulta de pagamento por id (Lote 4).
+ * Corpo da resposta da consulta de pagamento por id.
  *
  * Expoe o estado completo do ciclo de vida do pagamento. A {@code idempotencyKey}
  * nao e retornada.

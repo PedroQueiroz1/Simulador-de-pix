@@ -5,8 +5,7 @@ import io.pixsimulator.payment.application.dto.ProcessPixPaymentResult;
 import java.util.UUID;
 
 /**
- * Porta de entrada (input port) para o processamento simulado de pagamento
- * (Lote 4).
+ * Porta de entrada (input port) para o processamento simulado de pagamento.
  *
  * Define a intencao "processar um pagamento" sem expor HTTP nem persistencia.
  * A decisao de aprovar/rejeitar e simulada e deterministica (ver

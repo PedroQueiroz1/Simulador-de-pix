@@ -28,7 +28,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 /**
- * Testes do {@link PaymentOutboxEventService} (Lote 6).
+ * Testes do {@link PaymentOutboxEventService}.
  *
  * <p>Usa um {@link ObjectMapper} real (Jackson + JavaTime) e um
  * {@link IdGenerator} deterministico; o {@link OutboxRepository} e mockado
@@ -159,7 +159,7 @@ class PaymentOutboxEventServiceTest {
     }
 
     // ----------------------------------------------------------------------
-    // Lote 8: propagacao do correlationId (lido do MDC) para o payload.
+    // Propagacao do correlationId (lido do MDC) para o payload.
     // ----------------------------------------------------------------------
 
     @Test

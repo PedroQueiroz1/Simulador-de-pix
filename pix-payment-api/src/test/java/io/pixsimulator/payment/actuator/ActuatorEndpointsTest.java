@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Testes do Actuator no {@code pix-payment-api} (Lote 8).
+ * Testes do Actuator no {@code pix-payment-api}.
  *
  * <p>Sobe um contexto web minimo (apenas web + actuator), excluindo as
  * auto-configuracoes de infraestrutura (SQL Server/JPA/Flyway, Redis, Kafka) para

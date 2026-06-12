@@ -10,7 +10,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Adapter de saida MongoDB para a auditoria de notificacoes (Lote 7).
+ * Adapter de saida MongoDB para a auditoria de notificacoes.
  *
  * <p>Implementa a porta {@link NotificationAuditRepository} delegando ao
  * {@link SpringDataNotificationAuditRepository} e convertendo dominio &harr;

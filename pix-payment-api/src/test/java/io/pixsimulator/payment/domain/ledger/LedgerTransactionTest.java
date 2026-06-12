@@ -15,8 +15,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Testes do dominio do Ledger (Lote 5): regras de dupla entrada, fechamento em
- * zero, valor positivo e imutabilidade (append-only).
+ * Testes do dominio do Ledger: regras de dupla entrada, fechamento em zero,
+ * valor positivo e imutabilidade (append-only).
  */
 class LedgerTransactionTest {
 

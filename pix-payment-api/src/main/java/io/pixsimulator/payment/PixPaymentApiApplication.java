@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
- * Lote 6: {@link EnableScheduling} habilita o agendamento usado pelo
+ * {@link EnableScheduling} habilita o agendamento usado pelo
  * {@code OutboxPublisher} (varredura periodica da tabela {@code outbox_events}).
  * O publisher e desligavel por configuracao
  * ({@code pix.outbox.publisher.enabled=false}); quando desligado, nenhum metodo

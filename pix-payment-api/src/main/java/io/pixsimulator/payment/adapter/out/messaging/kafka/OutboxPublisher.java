@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Publisher assincrono da Outbox (Lote 6).
+ * Publisher assincrono da Outbox.
  *
  * <p>Em intervalos fixos, le os eventos {@link OutboxEventStatus#PENDING} ja
  * disponiveis e os publica no Kafka. No sucesso marca como
@@ -30,8 +30,8 @@ import java.util.List;
  *
  * <p>Desligavel por configuracao ({@code pix.outbox.publisher.enabled=false}):
  * util em testes de integracao que nao querem o polling concorrente. O modelo e
- * <strong>at-least-once</strong> (ADR-027): o consumidor idempotente vem no
- * Lote 7.
+ * <strong>at-least-once</strong> (ADR-027): o consumidor idempotente e
+ * implementado no pix-notification-worker.
  */
 @Component
 @ConditionalOnProperty(prefix = "pix.outbox.publisher", name = "enabled", havingValue = "true", matchIfMissing = true)

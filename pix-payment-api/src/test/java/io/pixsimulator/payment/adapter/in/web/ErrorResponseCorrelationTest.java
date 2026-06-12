@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Testes do formato padronizado de erro (Lote 8): toda resposta de erro carrega
+ * Testes do formato padronizado de erro: toda resposta de erro carrega
  * {@code correlationId} (do MDC, via {@link CorrelationIdFilter}), devolve o
  * header {@code X-Correlation-Id} e nunca expoe stack trace.
  */

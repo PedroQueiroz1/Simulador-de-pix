@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  * carrega {@code timestamp}, {@code status}, {@code error}, {@code message},
  * {@code errors}, {@code path} e {@code correlationId} (lido do MDC, preenchido
  * pelo {@link CorrelationIdFilter}), sem nunca expor stack trace, classe interna
- * da excecao, SQL ou secrets (Lote 8).
+ * da excecao, SQL ou secrets.
  */
 @RestControllerAdvice
 public class RestExceptionHandler {
@@ -70,7 +70,7 @@ public class RestExceptionHandler {
     }
 
     /**
-     * Lote 4: path variable com tipo invalido (ex.: {@code paymentId} que nao e
+     * Path variable com tipo invalido (ex.: {@code paymentId} que nao e
      * um UUID valido) -&gt; HTTP 400 Bad Request.
      */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
@@ -81,7 +81,7 @@ public class RestExceptionHandler {
     }
 
     /**
-     * Lote 4: pagamento nao encontrado para o {@code paymentId} informado -&gt;
+     * Pagamento nao encontrado para o {@code paymentId} informado -&gt;
      * HTTP 404 Not Found.
      */
     @ExceptionHandler(PaymentNotFoundException.class)
@@ -92,7 +92,7 @@ public class RestExceptionHandler {
     }
 
     /**
-     * Lote 4: tentativa de processar um pagamento ja em status terminal -&gt;
+     * Tentativa de processar um pagamento ja em status terminal -&gt;
      * HTTP 409 Conflict.
      */
     @ExceptionHandler(PaymentNotProcessableException.class)
@@ -103,7 +103,7 @@ public class RestExceptionHandler {
     }
 
     /**
-     * Lote 3: {@code Idempotency-Key} reutilizada com payload diferente -&gt;
+     * {@code Idempotency-Key} reutilizada com payload diferente -&gt;
      * HTTP 409 Conflict. Mensagem fixa, sem expor detalhes internos.
      */
     @ExceptionHandler(IdempotencyConflictException.class)
@@ -114,7 +114,7 @@ public class RestExceptionHandler {
     }
 
     /**
-     * Lote 3: requisicao com {@code Idempotency-Key} cuja operacao ainda esta
+     * Requisicao com {@code Idempotency-Key} cuja operacao ainda esta
      * em processamento -&gt; HTTP 409 Conflict.
      */
     @ExceptionHandler(IdempotencyInProgressException.class)

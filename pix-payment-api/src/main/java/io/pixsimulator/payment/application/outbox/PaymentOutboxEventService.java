@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * Servico de aplicacao que cria os eventos de pagamento na Outbox (Lote 6).
+ * Servico de aplicacao que cria os eventos de pagamento na Outbox.
  *
  * <p>Responsabilidade unica: montar o payload explicito, serializa-lo para JSON
  * com o {@link ObjectMapper}, criar o {@link OutboxEvent} correspondente e

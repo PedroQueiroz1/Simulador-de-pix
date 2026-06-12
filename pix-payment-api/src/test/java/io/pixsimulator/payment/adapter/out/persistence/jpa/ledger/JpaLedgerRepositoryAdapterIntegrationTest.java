@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Teste de integracao do adapter JPA do Ledger usando SQL Server real via
- * Testcontainers (Lote 5).
+ * Testcontainers.
  *
  * <p>Sobe o contexto completo: o Flyway cria o schema (inclusive a V3) e o
  * Hibernate valida ({@code ddl-auto=validate}). Como {@code ledger_*} tem FK
@@ -52,7 +52,7 @@ class JpaLedgerRepositoryAdapterIntegrationTest {
                         + ";databaseName=master;encrypt=true;trustServerCertificate=true");
         registry.add("spring.datasource.username", SQL_SERVER::getUsername);
         registry.add("spring.datasource.password", SQL_SERVER::getPassword);
-        // Lote 6: o publisher assincrono nao deve rodar neste teste (evita ruido
+        // O publisher assincrono nao deve rodar neste teste (evita ruido
         // e bloqueio ao buscar conexao durante o shutdown do contexto).
         registry.add("pix.outbox.publisher.enabled", () -> false);
     }

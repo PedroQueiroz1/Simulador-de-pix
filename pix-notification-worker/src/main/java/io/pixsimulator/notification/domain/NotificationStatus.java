@@ -1,7 +1,7 @@
 package io.pixsimulator.notification.domain;
 
 /**
- * Resultado do processamento de um evento pelo worker (Lote 7), gravado em
+ * Resultado do processamento de um evento pelo worker, gravado em
  * {@code notification_audits.notificationStatus}.
  *
  * <ul>

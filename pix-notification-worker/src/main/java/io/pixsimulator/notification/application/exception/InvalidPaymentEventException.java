@@ -3,7 +3,7 @@ package io.pixsimulator.notification.application.exception;
 import java.util.UUID;
 
 /**
- * Sinaliza um evento de pagamento invalido (Lote 7): JSON malformado, campo
+ * Sinaliza um evento de pagamento invalido: JSON malformado, campo
  * obrigatorio ausente, {@code eventVersion} incompativel ou {@code eventType}
  * desconhecido.
  *

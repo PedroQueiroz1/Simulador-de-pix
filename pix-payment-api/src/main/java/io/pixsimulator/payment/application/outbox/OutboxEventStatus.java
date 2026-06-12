@@ -1,7 +1,7 @@
 package io.pixsimulator.payment.application.outbox;
 
 /**
- * Estado de publicacao de um {@link OutboxEvent} (Lote 6).
+ * Estado de publicacao de um {@link OutboxEvent}.
  *
  * <pre>
  *   PENDING   -> aguardando publicacao pelo publisher assincrono.

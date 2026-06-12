@@ -1,8 +1,7 @@
 package io.pixsimulator.payment.observability;
 
 /**
- * Chaves de contexto de log (MDC) e nomes de header usados na rastreabilidade
- * (Lote 8).
+ * Chaves de contexto de log (MDC) e nomes de header usados na rastreabilidade.
  *
  * <p>Centraliza as constantes para que o {@code CorrelationIdFilter}, o
  * {@code RestExceptionHandler}, os casos de uso e o

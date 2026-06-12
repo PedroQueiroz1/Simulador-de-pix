@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * Evento de pagamento ja parseado e validado (Lote 7).
+ * Evento de pagamento ja parseado e validado.
  *
  * <p>Representacao tipada do JSON recebido do Kafka, depois de o handler validar
  * os campos comuns, a versao ({@code = 1}), o tipo conhecido e os campos
@@ -22,9 +22,9 @@ import java.util.UUID;
  * </ul>
  * Campos nao aplicaveis ao tipo do evento chegam nulos.
  *
- * <p>Lote 8: inclui o {@code correlationId} propagado pelo {@code pix-payment-api}
- * no payload Kafka. E opcional (pode chegar nulo em eventos antigos), colocado no
- * MDC durante o processamento e gravado na auditoria do MongoDB.
+ * <p>Inclui o {@code correlationId} propagado pelo {@code pix-payment-api}
+ * no payload Kafka. E opcional (pode chegar nulo), colocado no MDC durante o
+ * processamento e gravado na auditoria do MongoDB.
  */
 public record PaymentEventMessage(
         UUID eventId,

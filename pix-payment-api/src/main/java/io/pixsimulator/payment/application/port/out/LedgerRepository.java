@@ -11,7 +11,7 @@ import java.util.UUID;
  * Porta de saida (output port) para persistencia do Ledger.
  *
  * <p>A aplicacao depende desta interface, nao da tecnologia. A implementacao
- * (Lote 5) e o {@code JpaLedgerRepositoryAdapter} sobre SQL Server.
+ * e o {@code JpaLedgerRepositoryAdapter} sobre SQL Server.
  *
  * <p>O Ledger e append-only (ADR-023): a porta intencionalmente NAO expoe
  * update nem delete — apenas {@code save} e consultas.

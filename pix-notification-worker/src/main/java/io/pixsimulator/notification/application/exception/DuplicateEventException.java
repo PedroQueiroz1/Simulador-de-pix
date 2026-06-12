@@ -3,7 +3,7 @@ package io.pixsimulator.notification.application.exception;
 import java.util.UUID;
 
 /**
- * Sinaliza que um {@code eventId} ja auditado tentou ser salvo novamente (Lote 7).
+ * Sinaliza que um {@code eventId} ja auditado tentou ser salvo novamente.
  *
  * <p>E a traducao, na porta de saida, da violacao do indice unico de
  * {@code eventId} no MongoDB ({@code DuplicateKeyException}). Protege contra a

@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Testes do {@link NotificationSimulator} (Lote 7).
+ * Testes do {@link NotificationSimulator}.
  *
  * <p>Garante que a mensagem simulada e construida para cada tipo de evento e
  * inclui dados relevantes do pagamento. O simulador nao faz I/O externo, entao o

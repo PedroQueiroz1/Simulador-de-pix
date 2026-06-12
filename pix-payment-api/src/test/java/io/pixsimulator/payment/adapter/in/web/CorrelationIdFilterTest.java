@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Testes do {@link CorrelationIdFilter} (Lote 8).
+ * Testes do {@link CorrelationIdFilter}.
  *
  * <p>Exercita o filtro isoladamente com objetos mock do Spring: leitura/geracao
  * dos ids, devolucao nos headers, presenca no MDC durante a cadeia e limpeza do

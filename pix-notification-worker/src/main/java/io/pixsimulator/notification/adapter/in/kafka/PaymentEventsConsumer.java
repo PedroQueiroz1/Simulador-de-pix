@@ -6,7 +6,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
 /**
- * Adapter de entrada Kafka (Lote 7).
+ * Adapter de entrada Kafka.
  *
  * <p>Unica responsabilidade: receber a mensagem do topico de eventos de
  * pagamento e delegar para o {@link PaymentEventHandler}. NAO contem regra de

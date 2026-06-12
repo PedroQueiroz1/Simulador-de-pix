@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 /**
- * Testes do caso de uso de consulta de Ledger por pagamento (Lote 5).
+ * Testes do caso de uso de consulta de Ledger por pagamento.
  */
 @ExtendWith(MockitoExtension.class)
 class GetLedgerByPaymentServiceTest {

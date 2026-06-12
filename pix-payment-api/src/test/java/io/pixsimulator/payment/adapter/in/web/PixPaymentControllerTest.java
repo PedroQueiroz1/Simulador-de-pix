@@ -213,7 +213,7 @@ class PixPaymentControllerTest {
     }
 
     @Test
-    @DisplayName("Lote 3: retry equivalente deve retornar HTTP 201 com o mesmo paymentId")
+    @DisplayName("Retry equivalente deve retornar HTTP 201 com o mesmo paymentId")
     void shouldReturn201WithSamePaymentIdOnEquivalentRetry() throws Exception {
         // O caso de uso devolve a mesma resposta (mesmo paymentId) nas duas chamadas:
         // e o comportamento idempotente do retry equivalente, visto pelo controller.
@@ -230,7 +230,7 @@ class PixPaymentControllerTest {
     }
 
     @Test
-    @DisplayName("Lote 3: mesma chave com payload diferente deve retornar HTTP 409 (conflito)")
+    @DisplayName("Mesma chave com payload diferente deve retornar HTTP 409 (conflito)")
     void shouldReturn409OnIdempotencyConflict() throws Exception {
         when(createPixPaymentUseCase.create(any()))
                 .thenThrow(new IdempotencyConflictException(IDEMPOTENCY_VALUE));
@@ -247,7 +247,7 @@ class PixPaymentControllerTest {
     }
 
     @Test
-    @DisplayName("Lote 3: mesma chave em processamento deve retornar HTTP 409 (in progress)")
+    @DisplayName("Mesma chave em processamento deve retornar HTTP 409 (in progress)")
     void shouldReturn409WhenIdempotencyInProgress() throws Exception {
         when(createPixPaymentUseCase.create(any()))
                 .thenThrow(new IdempotencyInProgressException(IDEMPOTENCY_VALUE));
@@ -264,7 +264,7 @@ class PixPaymentControllerTest {
     }
 
     @Test
-    @DisplayName("Lote 3: resposta de conflito de idempotencia nao deve expor stack trace")
+    @DisplayName("Resposta de conflito de idempotencia nao deve expor stack trace")
     void idempotencyConflictShouldNotExposeStackTrace() throws Exception {
         when(createPixPaymentUseCase.create(any()))
                 .thenThrow(new IdempotencyConflictException(IDEMPOTENCY_VALUE));
@@ -280,7 +280,7 @@ class PixPaymentControllerTest {
     }
 
     // ----------------------------------------------------------------------
-    // Lote 4: GET /api/v1/pix/payments/{paymentId}
+    // GET /api/v1/pix/payments/{paymentId}
     // ----------------------------------------------------------------------
 
     private GetPixPaymentResult getResult() {
@@ -341,7 +341,7 @@ class PixPaymentControllerTest {
     }
 
     // ----------------------------------------------------------------------
-    // Lote 4: POST /api/v1/pix/payments/{paymentId}/process
+    // POST /api/v1/pix/payments/{paymentId}/process
     // ----------------------------------------------------------------------
 
     @Test

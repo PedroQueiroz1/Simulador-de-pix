@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
- * Testes do {@link NotificationAuditMongoMapper} (Lote 7).
+ * Testes do {@link NotificationAuditMongoMapper}.
  *
  * <p>Garante a conversao fiel dominio &harr; documento nos dois sentidos,
  * incluindo a traducao {@link NotificationStatus} &harr; {@code String} e a

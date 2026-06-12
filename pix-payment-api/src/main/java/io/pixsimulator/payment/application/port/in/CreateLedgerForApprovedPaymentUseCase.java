@@ -4,8 +4,7 @@ import io.pixsimulator.payment.domain.ledger.LedgerTransaction;
 import io.pixsimulator.payment.domain.model.PixPayment;
 
 /**
- * Porta de entrada (input port) para criar o Ledger de um pagamento aprovado
- * (Lote 5).
+ * Porta de entrada (input port) para criar o Ledger de um pagamento aprovado.
  *
  * <p>NAO e exposta por endpoint: o Ledger nasce apenas como efeito do fluxo de
  * processamento aprovado ({@code ProcessPixPaymentUseCase}). Existe como porta

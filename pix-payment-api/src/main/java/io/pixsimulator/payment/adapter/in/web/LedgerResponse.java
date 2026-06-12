@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Corpo da resposta da consulta de Ledger por pagamento (Lote 5).
+ * Corpo da resposta da consulta de Ledger por pagamento.
  *
  * <pre>
  * {

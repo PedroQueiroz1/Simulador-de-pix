@@ -36,7 +36,7 @@ import org.springframework.context.annotation.Configuration;
  * <p>{@link IdempotencyProperties} e habilitada aqui para fornecer o TTL
  * configuravel ao {@link IdempotencyService}.
  *
- * <p>Lote 6: tambem monta o {@link PaymentOutboxEventService} (que grava eventos
+ * <p>Tambem monta o {@link PaymentOutboxEventService} (que grava eventos
  * na Outbox dentro da transacao dos casos de uso) e habilita as propriedades de
  * Kafka/Outbox ({@link KafkaTopicsProperties}, {@link OutboxPublisherProperties}).
  */
@@ -104,7 +104,7 @@ public class UseCaseConfig {
     }
 
     // ---------------------------------------------------------------------
-    // Lote 5: Ledger
+    // Ledger
     // ---------------------------------------------------------------------
 
     @Bean

@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * Resultado do processamento simulado de um pagamento (Lote 4).
+ * Resultado do processamento simulado de um pagamento.
  *
  * Carrega apenas o desfecho da operacao: o {@code status} final
  * ({@code APPROVED} ou {@code REJECTED}), o {@code processedAt} e, em caso de

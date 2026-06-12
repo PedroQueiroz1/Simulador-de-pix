@@ -6,7 +6,7 @@ import io.pixsimulator.payment.application.outbox.OutboxEventStatus;
 
 /**
  * Mapper manual entre o modelo de aplicacao {@link OutboxEvent} e a entidade JPA
- * {@link OutboxEventEntity} (Lote 6).
+ * {@link OutboxEventEntity}.
  *
  * <p>Intencionalmente explicito (sem MapStruct), deixando clara a fronteira
  * entre aplicacao e persistencia. Nao cria regras novas: apenas converte

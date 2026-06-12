@@ -16,7 +16,7 @@ import java.util.UUID;
 
 /**
  * Adapter de saida que implementa a porta {@link OutboxRepository} usando
- * Spring Data JPA + SQL Server (Lote 6).
+ * Spring Data JPA + SQL Server.
  *
  * <p>Traduz aplicacao &harr; entity via {@link OutboxEventJpaMapper} e delega o
  * acesso ao banco ao {@link SpringDataOutboxEventRepository}.

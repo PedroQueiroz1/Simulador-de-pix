@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Consulta o Ledger de um pagamento (Lote 5).
+ * Consulta o Ledger de um pagamento.
  *
  * <p>Primeiro confirma que o pagamento existe (senao 404 via
  * {@link PaymentNotFoundException}); em seguida le as transacoes de ledger e as

@@ -17,7 +17,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * Testes do mapper manual entre dominio do Ledger e entidades JPA (Lote 5).
+ * Testes do mapper manual entre dominio do Ledger e entidades JPA.
  */
 class LedgerJpaMapperTest {
 

@@ -21,9 +21,9 @@ import java.util.UUID;
  * ao banco ao {@link SpringDataLedgerTransactionRepository}.
  *
  * <p>As operacoes usam {@code @Transactional} com propagacao padrao
- * ({@code REQUIRED}): quando chamadas dentro do processamento de pagamento
- * (Lote 5), participam da transacao aberta no caso de uso, garantindo que a
- * aprovacao do pagamento e a criacao do Ledger sejam atomicas.
+ * ({@code REQUIRED}): quando chamadas dentro do processamento de pagamento,
+ * participam da transacao aberta no caso de uso, garantindo que a aprovacao do
+ * pagamento e a criacao do Ledger sejam atomicas.
  */
 @Repository
 public class JpaLedgerRepositoryAdapter implements LedgerRepository {

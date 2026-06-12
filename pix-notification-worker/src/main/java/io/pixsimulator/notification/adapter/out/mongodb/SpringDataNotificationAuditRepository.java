@@ -6,7 +6,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Repositorio Spring Data MongoDB para {@link NotificationAuditDocument} (Lote 7).
+ * Repositorio Spring Data MongoDB para {@link NotificationAuditDocument}.
  *
  * <p>Fornece as queries derivadas usadas pelo adapter
  * ({@code existsByEventId}/{@code findByEventId}). E um detalhe de infraestrutura:

@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Porta de saida (output port) do Transactional Outbox (Lote 6).
+ * Porta de saida (output port) do Transactional Outbox.
  *
  * <p>Abstrai a persistencia dos {@link OutboxEvent}. O {@code save} participa da
  * transacao do caso de uso (mesma transacao da mudanca de Payment/Ledger,

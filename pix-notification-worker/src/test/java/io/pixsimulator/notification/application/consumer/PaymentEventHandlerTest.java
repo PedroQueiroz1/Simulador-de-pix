@@ -25,7 +25,7 @@ import static org.mockito.Mockito.when;
 
 /**
  * Testes do {@link PaymentEventHandler} com {@link NotificationSimulator} e
- * {@link NotificationAuditRepository} mockados (Lote 7).
+ * {@link NotificationAuditRepository} mockados.
  *
  * <p>Cobre o caminho feliz dos tres tipos de evento, a idempotencia por
  * {@code eventId} (duplicado nao simula nem salva de novo) e o tratamento
@@ -132,7 +132,7 @@ class PaymentEventHandlerTest {
     }
 
     @Test
-    @DisplayName("Lote 8: deve gravar o correlationId do payload na auditoria")
+    @DisplayName("Deve gravar o correlationId do payload na auditoria")
     void savesCorrelationIdFromPayload() {
         when(notificationSimulator.simulate(any(PaymentEventMessage.class))).thenReturn("Notificacao simulada");
 

@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Testes do Actuator no {@code pix-notification-worker} (Lote 8).
+ * Testes do Actuator no {@code pix-notification-worker}.
  *
  * <p>O worker passou a subir uma camada web minima apenas para servir os
  * endpoints operacionais. Sobe um contexto web minimo (web + actuator), excluindo

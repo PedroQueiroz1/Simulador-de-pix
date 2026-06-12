@@ -16,10 +16,10 @@ package io.pixsimulator.payment.application.exception;
  * original (retry equivalente) ou lancando
  * {@link IdempotencyConflictException} se o payload divergir.
  *
- * <p><strong>Historico:</strong> uma excecao com este nome existiu no Lote 2
- * (idempotencia por banco), ficou morta apos o Lote 3 (Redis) e foi removida na
- * revisao final. Foi reintroduzida nesta melhoria, agora de fato lancada pelo
- * fluxo de producao (ver docs/learning/removed-and-obsolete-classes.md).
+ * <p><strong>Historico:</strong> esta excecao existiu em uma versao anterior
+ * (idempotencia por banco), ficou inativa apos a introducao da idempotencia via
+ * Redis e foi removida. Foi reintroduzida, agora de fato lancada pelo fluxo de
+ * producao (ver docs/learning/removed-and-obsolete-classes.md).
  */
 public class DuplicateIdempotencyKeyException extends RuntimeException {
 

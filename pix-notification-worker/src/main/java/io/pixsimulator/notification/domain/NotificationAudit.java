@@ -5,7 +5,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * Registro de auditoria de um evento consumido pelo worker (Lote 7), gravado na
+ * Registro de auditoria de um evento consumido pelo worker, gravado na
  * collection {@code notification_audits} do MongoDB.
  *
  * <p>Vive no dominio e nao conhece Spring nem MongoDB: o documento de

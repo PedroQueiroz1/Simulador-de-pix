@@ -52,7 +52,7 @@ class JpaPixPaymentRepositoryAdapterIntegrationTest {
                         + ";databaseName=master;encrypt=true;trustServerCertificate=true");
         registry.add("spring.datasource.username", SQL_SERVER::getUsername);
         registry.add("spring.datasource.password", SQL_SERVER::getPassword);
-        // Lote 6: o publisher assincrono nao deve rodar neste teste (evita ruido
+        // O publisher assincrono nao deve rodar neste teste (evita ruido
         // e bloqueio ao buscar conexao durante o shutdown do contexto).
         registry.add("pix.outbox.publisher.enabled", () -> false);
     }
@@ -149,7 +149,7 @@ class JpaPixPaymentRepositoryAdapterIntegrationTest {
     }
 
     @Test
-    @DisplayName("Lote 4: a migration V2 deve ter criado as colunas de ciclo de vida")
+    @DisplayName("A migration V2 deve ter criado as colunas de ciclo de vida")
     void migrationV2ShouldHaveCreatedLifecycleColumns() {
         Integer count = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS "
@@ -161,7 +161,7 @@ class JpaPixPaymentRepositoryAdapterIntegrationTest {
     }
 
     @Test
-    @DisplayName("Lote 4: deve buscar pagamento por paymentId")
+    @DisplayName("Deve buscar pagamento por paymentId")
     void shouldFindById() {
         PixPayment payment = newPayment("key-byid-" + UUID.randomUUID());
         adapter.save(payment);
@@ -175,7 +175,7 @@ class JpaPixPaymentRepositoryAdapterIntegrationTest {
     }
 
     @Test
-    @DisplayName("Lote 4: deve retornar vazio quando paymentId nao existir")
+    @DisplayName("Deve retornar vazio quando paymentId nao existir")
     void shouldReturnEmptyWhenIdDoesNotExist() {
         Optional<PixPayment> found = adapter.findById(idGenerator.generate());
 
@@ -183,7 +183,7 @@ class JpaPixPaymentRepositoryAdapterIntegrationTest {
     }
 
     @Test
-    @DisplayName("Lote 4: deve salvar e recuperar pagamento aprovado")
+    @DisplayName("Deve salvar e recuperar pagamento aprovado")
     void shouldSaveAndRetrieveApprovedPayment() {
         PixPayment payment = newPayment("key-approved-" + UUID.randomUUID());
         LocalDateTime now = LocalDateTime.now();
@@ -199,7 +199,7 @@ class JpaPixPaymentRepositoryAdapterIntegrationTest {
     }
 
     @Test
-    @DisplayName("Lote 4: deve salvar e recuperar pagamento rejeitado com rejectionReason")
+    @DisplayName("Deve salvar e recuperar pagamento rejeitado com rejectionReason")
     void shouldSaveAndRetrieveRejectedPayment() {
         PixPayment payment = newPayment("key-rejected-" + UUID.randomUUID());
         LocalDateTime now = LocalDateTime.now();

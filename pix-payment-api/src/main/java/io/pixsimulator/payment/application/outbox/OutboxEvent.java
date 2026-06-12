@@ -5,7 +5,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * Registro do Transactional Outbox (Lote 6): um evento gravado na tabela
+ * Registro do Transactional Outbox: um evento gravado na tabela
  * {@code outbox_events} na MESMA transacao da mudanca de estado de negocio.
  *
  * <p>Vive na camada de aplicacao (e nao no dominio): o dominio

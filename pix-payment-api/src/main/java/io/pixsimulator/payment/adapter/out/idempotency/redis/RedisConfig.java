@@ -9,7 +9,7 @@ import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 /**
- * Configuracao Redis do adapter de idempotencia (Lote 3).
+ * Configuracao Redis do adapter de idempotencia.
  *
  * <p>Define um {@link RedisTemplate} tipado em {@link RedisIdempotencyRecord}:
  * chave como String e valor serializado em JSON. O {@code ObjectMapper} local e

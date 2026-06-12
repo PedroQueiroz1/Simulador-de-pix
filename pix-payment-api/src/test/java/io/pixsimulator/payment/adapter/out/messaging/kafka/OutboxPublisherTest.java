@@ -30,7 +30,7 @@ import static org.mockito.Mockito.when;
 
 /**
  * Testes do {@link OutboxPublisher} com {@link KafkaTemplate} e
- * {@link OutboxRepository} mockados (Lote 6).
+ * {@link OutboxRepository} mockados.
  *
  * <p>Cobre: publicacao de um evento PENDING, marcacao como PUBLISHED no sucesso,
  * registro de falha (mantendo PENDING) e transicao para FAILED ao atingir o

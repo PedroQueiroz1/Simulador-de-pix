@@ -3,8 +3,7 @@ package io.pixsimulator.payment.config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * Propriedades do publisher da Outbox (prefixo {@code pix.outbox.publisher}),
- * Lote 6.
+ * Propriedades do publisher da Outbox (prefixo {@code pix.outbox.publisher}).
  *
  * <p>Todos os valores vem de variaveis de ambiente (ver {@code application.yml}
  * e {@code .env.example}) com defaults seguros para desenvolvimento local.

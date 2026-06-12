@@ -20,8 +20,8 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * Implementacao do caso de uso de processamento simulado de pagamento (Lote 4),
- * agora integrado ao Ledger (Lote 5).
+ * Implementacao do caso de uso de processamento simulado de pagamento,
+ * integrado ao Ledger.
  *
  * <p>O processamento e <strong>deterministico</strong> (ADR-016), nao representa
  * Pix real, antifraude, saldo ou Bacen. A decisao depende apenas do valor:
@@ -31,19 +31,18 @@ import java.util.UUID;
  *   amount &gt;  5000.00 -&gt; REJECTED  (nao gera Ledger)
  * </pre>
  *
- * <p><strong>Atomicidade (Lote 5):</strong> aprovar o pagamento e criar o Ledger
+ * <p><strong>Atomicidade:</strong> aprovar o pagamento e criar o Ledger
  * acontecem na mesma transacao ({@link Transactional}). Nao pode existir
- * pagamento aprovado sem Ledger, nem Ledger sem pagamento aprovado. A transacao
- * subiu para o nivel do caso de uso (conforme antecipado no Lote 2): os saves do
- * pagamento e do ledger (REQUIRED) passam a participar desta mesma transacao
- * local do SQL Server (ADR-021). Se a criacao do Ledger falhar, a aprovacao do
- * pagamento sofre rollback junto.
+ * pagamento aprovado sem Ledger, nem Ledger sem pagamento aprovado. Os saves do
+ * pagamento e do ledger (REQUIRED) participam desta mesma transacao local do
+ * SQL Server (ADR-021). Se a criacao do Ledger falhar, a aprovacao do pagamento
+ * sofre rollback junto.
  *
  * <p>As transicoes de status sao delegadas ao dominio ({@link PixPayment}); o
  * caso de uso apenas orquestra: busca, valida elegibilidade, aplica a regra,
  * persiste e (quando aprovado) dispara a criacao do Ledger.
  *
- * <p>Lote 6 (Transactional Outbox): dentro da mesma transacao, grava o evento
+ * <p>Transactional Outbox: dentro da mesma transacao, grava o evento
  * correspondente na Outbox — {@code PAYMENT_APPROVED} (com o
  * {@code ledgerTransactionId} do settlement) ou {@code PAYMENT_REJECTED} (com o
  * {@code rejectionReason}). Invariantes: pagamento aprovado nunca fica sem

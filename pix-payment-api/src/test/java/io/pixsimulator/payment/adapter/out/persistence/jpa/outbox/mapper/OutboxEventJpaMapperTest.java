@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
- * Testes do {@link OutboxEventJpaMapper} (Lote 6).
+ * Testes do {@link OutboxEventJpaMapper}.
  *
  * <p>Garante a conversao fiel aplicacao &harr; entity nos dois sentidos,
  * incluindo a traducao do enum {@link OutboxEventStatus} &harr; {@code String} e

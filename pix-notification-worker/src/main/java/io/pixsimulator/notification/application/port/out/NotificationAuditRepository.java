@@ -6,7 +6,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Porta de saida para a auditoria de notificacoes (Lote 7).
+ * Porta de saida para a auditoria de notificacoes.
  *
  * <p>Abstrai o MongoDB do handler. {@link #existsByEventId} e o caminho rapido de
  * idempotencia (antes de simular a notificacao); {@link #save} e a garantia

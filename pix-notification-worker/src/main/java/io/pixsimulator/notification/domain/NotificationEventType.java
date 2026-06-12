@@ -3,9 +3,9 @@ package io.pixsimulator.notification.domain;
 import java.util.Optional;
 
 /**
- * Tipos de evento de pagamento que o worker sabe processar (Lote 7).
+ * Tipos de evento de pagamento que o worker sabe processar.
  *
- * <p>Espelham o contrato publicado pelo {@code pix-payment-api} (Lote 6). Um
+ * <p>Espelham o contrato publicado pelo {@code pix-payment-api}. Um
  * {@code eventType} fora desta lista e tratado como erro controlado (tipo
  * desconhecido), nunca derrubando o consumer.
  */

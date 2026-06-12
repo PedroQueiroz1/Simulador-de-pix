@@ -5,13 +5,13 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * Payload explicito do evento {@code PAYMENT_REJECTED} (Lote 6).
+ * Payload explicito do evento {@code PAYMENT_REJECTED}.
  *
  * <p>Carrega o {@code rejectionReason} (motivo simulado da recusa). Pagamento
  * rejeitado nao movimenta valor: nao ha Ledger nem {@code ledgerTransactionId}.
  * {@code eventId} e igual ao {@code id} do {@code OutboxEvent}.
  *
- * <p>Lote 8: carrega o {@code correlationId} (lido do MDC), propagando a
+ * <p>Carrega o {@code correlationId} (lido do MDC), propagando a
  * rastreabilidade ate o worker.
  */
 public record PaymentRejectedEventPayload(

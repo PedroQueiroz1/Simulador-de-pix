@@ -15,7 +15,7 @@ import java.util.UUID;
  * de negocio e garante que o pagamento nasca sempre em um estado valido, com
  * status {@link PixPaymentStatus#CREATED} e {@code createdAt} preenchido.
  *
- * <p>Lote 4: a entidade passou a controlar o proprio ciclo de vida. As
+ * <p>A entidade controla o proprio ciclo de vida. As
  * transicoes de status ({@link #markAsProcessing}, {@link #approve},
  * {@link #reject}) sao regra de negocio e vivem aqui no dominio; qualquer
  * transicao invalida lanca {@link DomainException}. Por isso os campos que

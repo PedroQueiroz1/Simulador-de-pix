@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Teste de integracao do adapter JPA da Outbox usando SQL Server real via
- * Testcontainers (Lote 6).
+ * Testcontainers.
  *
  * <p>Sobe o contexto completo: o Flyway cria o schema (inclusive a V4) e o
  * Hibernate valida ({@code ddl-auto=validate}). O publisher assincrono e

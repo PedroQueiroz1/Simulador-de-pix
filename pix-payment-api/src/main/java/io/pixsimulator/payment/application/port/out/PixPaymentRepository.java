@@ -8,9 +8,8 @@ import java.util.UUID;
 /**
  * Porta de saida (output port) para persistencia de pagamentos.
  *
- * A aplicacao depende desta interface, nao da tecnologia. No Lote 1 a
- * implementacao era em memoria; no Lote 2 e SQL Server (via JPA), sem alterar
- * o caso de uso.
+ * A aplicacao depende desta interface, nao da tecnologia (ADR: implementacao
+ * em SQL Server via JPA, sem alterar o caso de uso).
  */
 public interface PixPaymentRepository {
 
@@ -28,7 +27,7 @@ public interface PixPaymentRepository {
     /**
      * Busca um pagamento pelo seu identificador.
      *
-     * Usado pelos casos de uso de consulta e de processamento (Lote 4) para
+     * Usado pelos casos de uso de consulta e de processamento para
      * recuperar o estado atual do pagamento antes de exibir ou transicionar.
      */
     Optional<PixPayment> findById(UUID paymentId);

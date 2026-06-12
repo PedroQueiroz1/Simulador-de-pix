@@ -30,7 +30,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Testes do caso de uso de criacao de Ledger para pagamento aprovado (Lote 5).
+ * Testes do caso de uso de criacao de Ledger para pagamento aprovado.
  */
 @ExtendWith(MockitoExtension.class)
 class CreateLedgerForApprovedPaymentServiceTest {

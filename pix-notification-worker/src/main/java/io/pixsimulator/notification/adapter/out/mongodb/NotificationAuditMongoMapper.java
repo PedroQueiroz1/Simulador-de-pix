@@ -5,7 +5,7 @@ import io.pixsimulator.notification.domain.NotificationStatus;
 
 /**
  * Mapper manual entre o dominio {@link NotificationAudit} e o documento Mongo
- * {@link NotificationAuditDocument} (Lote 7).
+ * {@link NotificationAuditDocument}.
  *
  * <p>Mantem o dominio livre de anotacoes do Spring Data. A traducao do
  * {@link NotificationStatus} e feita por nome ({@code enum <-> String}),

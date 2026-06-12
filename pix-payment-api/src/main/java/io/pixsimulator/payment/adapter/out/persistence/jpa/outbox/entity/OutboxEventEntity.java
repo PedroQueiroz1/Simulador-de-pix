@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * Entidade JPA da tabela {@code outbox_events} (Lote 6).
+ * Entidade JPA da tabela {@code outbox_events}.
  *
  * <p>Detalhe de infraestrutura, separado do modelo de aplicacao
  * {@code application.outbox.OutboxEvent}. So aqui vivem as anotacoes JPA. O

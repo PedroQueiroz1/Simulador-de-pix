@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Repositorio Spring Data JPA para {@link OutboxEventEntity} (Lote 6).
+ * Repositorio Spring Data JPA para {@link OutboxEventEntity}.
  *
  * <p>A query derivada busca eventos por {@code status} cujo {@code availableAt}
  * ja passou, em ordem de criacao — exatamente o padrao de varredura do

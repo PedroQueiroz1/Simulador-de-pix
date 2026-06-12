@@ -1,8 +1,7 @@
 package io.pixsimulator.payment.application.outbox;
 
 /**
- * Lancada quando a serializacao de um payload de evento para JSON falha
- * (Lote 6).
+ * Lancada quando a serializacao de um payload de evento para JSON falha.
  *
  * <p>Converte a {@code JsonProcessingException} (checked) do Jackson em uma
  * excecao nao verificada da aplicacao. Na pratica nao deve ocorrer: os payloads

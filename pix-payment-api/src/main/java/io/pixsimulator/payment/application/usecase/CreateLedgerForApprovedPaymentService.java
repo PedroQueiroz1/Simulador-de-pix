@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import java.time.LocalDateTime;
 
 /**
- * Cria o Ledger ({@code PIX_SETTLEMENT}) de um pagamento aprovado (Lote 5).
+ * Cria o Ledger ({@code PIX_SETTLEMENT}) de um pagamento aprovado.
  *
  * <p>Responsabilidades:
  * <ol>

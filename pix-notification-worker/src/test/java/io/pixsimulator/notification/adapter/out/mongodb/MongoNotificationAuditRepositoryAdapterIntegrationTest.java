@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Teste de integracao do {@link MongoNotificationAuditRepositoryAdapter} usando
- * MongoDB real via Testcontainers (Lote 7).
+ * MongoDB real via Testcontainers.
  *
  * <p>Nao sobe o contexto Spring completo (que tambem exigiria Kafka): monta
  * manualmente o {@link MongoTemplate} apontado para o container, cria o indice
@@ -108,7 +108,7 @@ class MongoNotificationAuditRepositoryAdapterIntegrationTest {
     }
 
     @Test
-    @DisplayName("Lote 8: deve persistir e recuperar o correlationId da auditoria")
+    @DisplayName("Deve persistir e recuperar o correlationId da auditoria")
     void persistsCorrelationId() {
         UUID eventId = UUID.randomUUID();
         adapter.save(processedAudit(eventId));

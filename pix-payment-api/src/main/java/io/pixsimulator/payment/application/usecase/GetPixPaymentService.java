@@ -9,7 +9,7 @@ import io.pixsimulator.payment.domain.model.PixPayment;
 import java.util.UUID;
 
 /**
- * Implementacao do caso de uso de consulta de pagamento por id (Lote 4).
+ * Implementacao do caso de uso de consulta de pagamento por id.
  *
  * <p>Apenas le do repositorio e converte o dominio em
  * {@link GetPixPaymentResult}. Se o pagamento nao existir, lanca

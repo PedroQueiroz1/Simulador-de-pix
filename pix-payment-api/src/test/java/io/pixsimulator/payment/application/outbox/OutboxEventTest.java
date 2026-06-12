@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
- * Testes do modelo de aplicacao {@link OutboxEvent} (Lote 6).
+ * Testes do modelo de aplicacao {@link OutboxEvent}.
  *
  * <p>Cobrem a criacao de um evento PENDING valido, as transicoes de publicacao
  * ({@code markPublished}) e de falha ({@code registerFailedAttempt}, incluindo o

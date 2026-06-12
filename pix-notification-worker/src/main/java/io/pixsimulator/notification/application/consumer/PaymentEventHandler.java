@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * Nucleo de negocio do worker (Lote 7): recebe o payload bruto do Kafka, valida,
+ * Nucleo de negocio do worker: recebe o payload bruto do Kafka, valida,
  * aplica idempotencia por {@code eventId}, simula a notificacao e grava a
  * auditoria no MongoDB.
  *
@@ -46,11 +46,11 @@ public class PaymentEventHandler {
 
     private static final Logger log = LoggerFactory.getLogger(PaymentEventHandler.class);
 
-    /** Chaves de MDC para rastreabilidade nos logs do worker (Lote 8). */
+    /** Chaves de MDC para rastreabilidade nos logs do worker. */
     static final String MDC_CORRELATION_ID = "correlationId";
     static final String MDC_EVENT_ID = "eventId";
 
-    /** Unica versao de contrato aceita neste lote (spec 036). */
+    /** Unica versao de contrato aceita (spec 036). */
     static final int SUPPORTED_EVENT_VERSION = 1;
 
     private final ObjectMapper objectMapper;
@@ -76,7 +76,7 @@ public class PaymentEventHandler {
         try {
             JsonNode node = parseJson(rawPayload);
             eventId = readUuid(node, "eventId");
-            // Lote 8: correlationId chega do pix-payment-api dentro do payload.
+            // CorrelationId chega do pix-payment-api dentro do payload.
             // Colocado no MDC para ligar os logs do worker a jornada da API.
             correlationId = readText(node, "correlationId");
             putContext(correlationId, eventId);
@@ -152,7 +152,7 @@ public class PaymentEventHandler {
         }
     }
 
-    /** Popula o MDC com correlationId/eventId quando disponiveis (Lote 8). */
+    /** Popula o MDC com correlationId/eventId quando disponiveis. */
     private static void putContext(String correlationId, UUID eventId) {
         if (correlationId != null && !correlationId.isBlank()) {
             MDC.put(MDC_CORRELATION_ID, correlationId);

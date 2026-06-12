@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Resultado da consulta de Ledger por pagamento (Lote 5).
+ * Resultado da consulta de Ledger por pagamento.
  *
  * <p>Carrega o {@code paymentId} e a lista de transacoes de ledger (cada uma com
  * suas entries). Quando o pagamento existe mas nao tem ledger, {@code transactions}

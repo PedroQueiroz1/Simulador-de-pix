@@ -3,12 +3,12 @@ package io.pixsimulator.notification.application.notification;
 import io.pixsimulator.notification.application.dto.PaymentEventMessage;
 
 /**
- * Simulador de notificacao (Lote 7, ADR-032).
+ * Simulador de notificacao (ADR-032).
  *
  * <p>Apenas <strong>monta uma mensagem</strong> de notificacao a partir do
  * evento, retornando o texto que seria enviado ao cliente. NAO chama API
- * externa, NAO envia e-mail/SMS/WhatsApp/push e NAO usa credenciais. Mantem o
- * foco do lote em Kafka, idempotencia de consumo e MongoDB, e torna o teste
+ * externa, NAO envia e-mail/SMS/WhatsApp/push e NAO usa credenciais. Mantém o
+ * escopo focado em Kafka, idempotencia de consumo e MongoDB, tornando o teste
  * deterministico.
  */
 public class NotificationSimulator {

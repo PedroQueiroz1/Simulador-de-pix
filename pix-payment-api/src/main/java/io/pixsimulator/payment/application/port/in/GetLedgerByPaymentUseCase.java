@@ -5,8 +5,7 @@ import io.pixsimulator.payment.application.dto.GetLedgerByPaymentResult;
 import java.util.UUID;
 
 /**
- * Porta de entrada (input port) para consultar o Ledger de um pagamento
- * (Lote 5).
+ * Porta de entrada (input port) para consultar o Ledger de um pagamento.
  *
  * <p>Define a intencao "consultar os lancamentos de um pagamento" sem expor HTTP
  * nem persistencia.

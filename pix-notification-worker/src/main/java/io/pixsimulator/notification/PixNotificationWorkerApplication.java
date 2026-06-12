@@ -4,7 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
- * Ponto de entrada do {@code pix-notification-worker} (Lote 7).
+ * Ponto de entrada do {@code pix-notification-worker}.
  *
  * <p>Segundo microservico do projeto: um worker orientado a eventos, SEM
  * endpoint REST. Consome os eventos de pagamento publicados pelo

@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Testes do ciclo de vida do pagamento (Lote 4): transicoes validas, transicoes
+ * Testes do ciclo de vida do pagamento: transicoes validas, transicoes
  * proibidas, status terminal e preenchimento de {@code updatedAt},
  * {@code processedAt} e {@code rejectionReason}.
  *

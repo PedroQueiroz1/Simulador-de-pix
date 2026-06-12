@@ -5,7 +5,7 @@ import io.pixsimulator.payment.application.dto.GetPixPaymentResult;
 import java.util.UUID;
 
 /**
- * Porta de entrada (input port) para consulta de pagamento por id (Lote 4).
+ * Porta de entrada (input port) para consulta de pagamento por id.
  *
  * Define a intencao "consultar um pagamento" sem expor HTTP nem persistencia.
  * O adapter web depende desta interface, nao da implementacao.

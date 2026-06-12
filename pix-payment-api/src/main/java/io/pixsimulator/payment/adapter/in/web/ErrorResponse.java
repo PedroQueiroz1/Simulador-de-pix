@@ -6,7 +6,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 
 /**
- * Corpo padronizado de erro da API (Lote 8).
+ * Corpo padronizado de erro da API.
  *
  * <p>Evolui o formato anterior ({@code message} + {@code errors}) acrescentando
  * campos uteis para sustentacao e rastreabilidade:
